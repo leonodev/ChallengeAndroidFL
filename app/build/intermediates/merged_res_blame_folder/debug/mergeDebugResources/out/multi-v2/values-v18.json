@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.geobeacon.tracker.app-mergeDebugResources-37:/values-v18/values-v18.xml",
+            "map": [
+                {
+                    "source": "/Users/fredyleon/.gradle/caches/9.8.2/transforms/69e5e1eb68d4a797ca13a5475cdb6bb7/transformed/appcompat-1.6.1/res/values-v18/values-v18.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "48",
+                        "endOffsets": "99"
+                    }
+                }
+            ]
+        }
+    ]
+}
