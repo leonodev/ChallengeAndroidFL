@@ -1,0 +1,23 @@
+# Built application files
+*.apk
+*.aar
+*.bundle
+*.apks
+
+# Generated files
+bin/
+build/
+.gradle/
+
+# Local configuration file (sdk path, etc.)
+local.properties
+
+# IDE files
+.idea/
+.DS_Store
+*.iml
+.navigation/
+
+# Keystore files
+*.jks
+*.keystore
