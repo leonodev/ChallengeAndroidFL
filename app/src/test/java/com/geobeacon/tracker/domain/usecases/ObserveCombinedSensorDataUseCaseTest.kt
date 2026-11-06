@@ -5,7 +5,6 @@ import com.geobeacon.tracker.domain.models.BleDevice
 import com.geobeacon.tracker.domain.models.GeoPoint
 import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import com.geobeacon.tracker.domain.repositories.LocationTracker
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -28,8 +27,6 @@ class ObserveCombinedSensorDataUseCaseTest {
 
     @Test
     fun `test combine flow emits correct sensor events`() = runTest {
-        val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher)
         val locationTracker = FakeLocationTracker(
             flow { emit(GeoPoint(-2.0, -79.0)) }
         )
@@ -37,7 +34,7 @@ class ObserveCombinedSensorDataUseCaseTest {
             flow { emit(BleDevice("AA:BB:CC:DD:EE:FF", -70, 1000L)) }
         )
 
-        val useCase = ObserveCombinedSensorDataUseCase(locationTracker, deviceScanner, testScope)
+        val useCase = ObserveCombinedSensorDataUseCase(locationTracker, deviceScanner)
 
         useCase().test {
             val item = awaitItem()
@@ -51,9 +48,6 @@ class ObserveCombinedSensorDataUseCaseTest {
 
     @Test
     fun `test late GPS location emits correctly once available`() = runTest {
-        val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher)
-
         val locationTracker = FakeLocationTracker(
             flow {
                 delay(1000)
@@ -64,7 +58,7 @@ class ObserveCombinedSensorDataUseCaseTest {
             flow { emit(BleDevice("11:22:33:44:55:66", -65, 2000L)) }
         )
 
-        val useCase = ObserveCombinedSensorDataUseCase(locationTracker, deviceScanner, testScope)
+        val useCase = ObserveCombinedSensorDataUseCase(locationTracker, deviceScanner)
 
         useCase().test {
             val item = awaitItem()

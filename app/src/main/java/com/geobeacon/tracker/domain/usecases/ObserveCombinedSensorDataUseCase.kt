@@ -1,44 +1,40 @@
 package com.geobeacon.tracker.domain.usecases
 
-import com.geobeacon.tracker.core.ApplicationScope
 import com.geobeacon.tracker.domain.models.GeoPoint
 import com.geobeacon.tracker.domain.models.SensorEvent
 import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import com.geobeacon.tracker.domain.repositories.LocationTracker
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ObserveCombinedSensorDataUseCase @Inject constructor(
     private val locationTracker: LocationTracker,
-    private val deviceScanner: DeviceScanner,
-    @ApplicationScope private val externalScope: CoroutineScope
+    private val deviceScanner: DeviceScanner
 ) {
-    private val locationStateFlow: StateFlow<GeoPoint?> = locationTracker.getLocationFlow()
-        .stateIn(
-            scope = externalScope,
-            started = SharingStarted.Eagerly,
-            initialValue = null
-        )
+    operator fun invoke(): Flow<SensorEvent> = channelFlow {
+        val lastLocation = MutableStateFlow<GeoPoint?>(null)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    operator fun invoke(): Flow<SensorEvent> {
-        return deviceScanner.scanForDevices()
-            .buffer(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            .flatMapLatest { bleDevice ->
-                locationStateFlow
-                    .filterNotNull()
-                    .take(1)
-                    .map { location ->
-                        SensorEvent(
-                            macAddress = bleDevice.macAddress,
-                            rssi = bleDevice.rssi,
-                            location = location,
-                            timestamp = bleDevice.timestamp
-                        )
-                    }
+        // One GPS subscription, tied to the lifetime of this collection
+        val locationJob = launch {
+            locationTracker.getLocationFlow().collect { lastLocation.value = it }
+        }
+
+        try {
+            deviceScanner.scanForDevices().collect { device ->
+                // Suspends until location is available; then emits event
+                val location = lastLocation.filterNotNull().first()
+                send(
+                    SensorEvent(
+                        macAddress = device.macAddress,
+                        rssi = device.rssi,
+                        location = location,
+                        timestamp = device.timestamp
+                    )
+                )
             }
+        } finally {
+            locationJob.cancel()
+        }
     }
 }
