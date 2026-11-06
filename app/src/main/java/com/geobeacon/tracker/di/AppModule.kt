@@ -13,6 +13,8 @@ import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import com.geobeacon.tracker.domain.repositories.LocationTracker
 import com.geobeacon.tracker.domain.repositories.SensorRepository
 import com.geobeacon.tracker.domain.repositories.SyncRepository
+import com.geobeacon.tracker.domain.repositories.TrackingController
+import com.geobeacon.tracker.service.TrackingManager
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -34,6 +36,8 @@ abstract class DomainModule {
     abstract fun bindRemoteDataSource(mockRemoteDataSource: MockRemoteDataSource): RemoteDataSource
     @Binds
     abstract fun bindSyncRepository(syncRepositoryImpl: SyncRepositoryImpl): SyncRepository
+    @Binds
+    abstract fun bindTrackingController(trackingManager: TrackingManager): TrackingController
 }
 
 @Module

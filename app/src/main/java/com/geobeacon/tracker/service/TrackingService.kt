@@ -4,19 +4,20 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.geobeacon.tracker.domain.usecases.ObserveCombinedSensorDataUseCase
-import com.geobeacon.tracker.domain.usecases.StartTrackingUseCase
+import com.geobeacon.tracker.core.IoDispatcher
+import com.geobeacon.tracker.domain.usecases.RecordSensorEventsUseCase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,15 +25,20 @@ import javax.inject.Inject
 class TrackingService : Service() {
 
     @Inject
-    lateinit var observeCombinedSensorDataUseCase: ObserveCombinedSensorDataUseCase
+    lateinit var recordSensorEventsUseCase: RecordSensorEventsUseCase
 
     @Inject
-    lateinit var startTrackingUseCase: StartTrackingUseCase
+    lateinit var syncScheduler: SyncScheduler
 
     @Inject
-    lateinit var syncManager: SyncManager
+    lateinit var trackingManager: TrackingManager
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @IoDispatcher
+    @Inject
+    lateinit var ioDispatcher: CoroutineDispatcher
+
+    private val serviceScope by lazy { CoroutineScope(SupervisorJob() + ioDispatcher) }
+    private var trackingJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -47,7 +53,7 @@ class TrackingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
-        if (action == "STOP_TRACKING") {
+        if (action == ACTION_STOP) {
             stopTracking()
             stopSelf()
             return START_NOT_STICKY
@@ -58,22 +64,25 @@ class TrackingService : Service() {
     }
 
     private fun startTracking() {
-        syncManager.startSyncLoop()
-        serviceScope.launch {
-            observeCombinedSensorDataUseCase().collectLatest { event ->
-                startTrackingUseCase(event)
-            }
+        if (trackingJob?.isActive == true) return
+        trackingManager.setTracking(true)
+        syncScheduler.startSyncWork()
+        trackingJob = serviceScope.launch {
+            recordSensorEventsUseCase()
         }
     }
 
     private fun stopTracking() {
-        syncManager.stopSyncLoop()
-        serviceScope.cancel()
+        trackingJob?.cancel()
+        trackingJob = null
+        syncScheduler.stopSyncWork()
+        trackingManager.setTracking(false)
     }
 
     override fun onDestroy() {
-        super.onDestroy()
+        stopTracking()
         serviceScope.cancel()
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -81,7 +90,7 @@ class TrackingService : Service() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                "TRACKING_CHANNEL",
+                CHANNEL_ID,
                 "Location Tracking",
                 NotificationManager.IMPORTANCE_LOW
             )
@@ -90,10 +99,18 @@ class TrackingService : Service() {
     }
 
     private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, "TRACKING_CHANNEL")
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("GeoBeacon Active")
             .setContentText("Scanning for BLE devices and Location...")
             .setSmallIcon(android.R.drawable.ic_dialog_map)
             .build()
+    }
+
+    companion object {
+        const val ACTION_STOP = "com.geobeacon.tracker.action.STOP_TRACKING"
+        private const val CHANNEL_ID = "TRACKING_CHANNEL"
+
+        fun startIntent(context: Context) = Intent(context, TrackingService::class.java)
+        fun stopIntent(context: Context) = startIntent(context).setAction(ACTION_STOP)
     }
 }

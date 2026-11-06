@@ -1,13 +1,12 @@
 package com.geobeacon.tracker.domain.usecases
 
-import com.geobeacon.tracker.domain.models.SensorEvent
-import com.geobeacon.tracker.domain.repositories.SensorRepository
+import com.geobeacon.tracker.domain.repositories.TrackingController
 import javax.inject.Inject
 
 class StartTrackingUseCase @Inject constructor(
-    private val sensorRepository: SensorRepository
+    private val trackingController: TrackingController
 ) {
-    suspend operator fun invoke(event: SensorEvent) {
-        sensorRepository.insert(event)
+    operator fun invoke() {
+        trackingController.startTracking()
     }
 }

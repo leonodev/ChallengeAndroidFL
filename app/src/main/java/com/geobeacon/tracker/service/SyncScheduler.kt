@@ -8,10 +8,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SyncManager @Inject constructor(
+class SyncScheduler @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    fun startSyncLoop() {
+    fun startSyncWork() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
@@ -27,7 +27,7 @@ class SyncManager @Inject constructor(
         )
     }
 
-    fun stopSyncLoop() {
+    fun stopSyncWork() {
         WorkManager.getInstance(context).cancelUniqueWork("GeoBeaconSyncWork")
     }
 }

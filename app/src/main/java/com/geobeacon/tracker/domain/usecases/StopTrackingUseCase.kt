@@ -1,9 +1,12 @@
 package com.geobeacon.tracker.domain.usecases
 
+import com.geobeacon.tracker.domain.repositories.TrackingController
 import javax.inject.Inject
 
-class StopTrackingUseCase @Inject constructor() {
+class StopTrackingUseCase @Inject constructor(
+    private val trackingController: TrackingController
+) {
     operator fun invoke() {
-        // Stop logic placeholder
+        trackingController.stopTracking()
     }
 }

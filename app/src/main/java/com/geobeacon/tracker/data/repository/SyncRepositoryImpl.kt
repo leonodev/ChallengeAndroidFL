@@ -6,6 +6,7 @@ import com.geobeacon.tracker.domain.models.SensorEvent
 import com.geobeacon.tracker.domain.repositories.SyncRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 class SyncRepositoryImpl @Inject constructor(
@@ -16,6 +17,8 @@ class SyncRepositoryImpl @Inject constructor(
         return withContext(ioDispatcher) {
             try {
                 remoteDataSource.uploadEvents(events)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 false
             }

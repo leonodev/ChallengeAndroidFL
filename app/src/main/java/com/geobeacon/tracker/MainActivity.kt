@@ -1,7 +1,6 @@
 package com.geobeacon.tracker
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -13,22 +12,21 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.geobeacon.tracker.databinding.ActivityMainBinding
 import com.geobeacon.tracker.presentation.TrackingAction
 import com.geobeacon.tracker.presentation.TrackingViewModel
-import com.geobeacon.tracker.service.TrackingService
+import com.geobeacon.tracker.presentation.adapter.SensorEventAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: TrackingViewModel by viewModels()
+    private lateinit var adapter: SensorEventAdapter
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -37,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
         if (fineLocationGranted || coarseLocationGranted) {
-            startTrackingService()
+            viewModel.onAction(TrackingAction.ToggleTracking(true))
         } else {
             Toast.makeText(this, "Location permission is required for tracking", Toast.LENGTH_SHORT).show()
         }
@@ -48,6 +46,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        adapter = SensorEventAdapter()
+        binding.recyclerViewEvents.layoutManager = LinearLayoutManager(this)
+        binding.recyclerViewEvents.adapter = adapter
+
         binding.btnToggle.setOnClickListener {
             val isCurrentlyTracking = viewModel.uiState.value.isTracking
             val newState = !isCurrentlyTracking
@@ -56,10 +58,6 @@ class MainActivity : AppCompatActivity() {
                 checkAndRequestPermissions()
             } else {
                 viewModel.onAction(TrackingAction.ToggleTracking(false))
-                val serviceIntent = Intent(this, TrackingService::class.java).apply {
-                    action = "STOP_TRACKING"
-                }
-                startService(serviceIntent)
             }
         }
 
@@ -72,14 +70,7 @@ class MainActivity : AppCompatActivity() {
                         binding.btnToggle.text = "Start Tracking"
                     }
 
-                    val sb = StringBuilder()
-                    val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                    for (event in state.lastEvents) {
-                        val timeStr = sdf.format(Date(event.timestamp))
-                        sb.append("[$timeStr] MAC: ${event.macAddress}\n")
-                        sb.append("  RSSI: ${event.rssi} | Lat: ${String.format(Locale.US, "%.4f", event.location.latitude)}, Lon: ${String.format(Locale.US, "%.4f", event.location.longitude)}\n\n")
-                    }
-                    binding.tvEvents.text = if (sb.isEmpty()) "No tracking events yet." else sb.toString()
+                    adapter.submitList(state.lastEvents)
                 }
             }
         }
@@ -101,13 +92,7 @@ class MainActivity : AppCompatActivity() {
         if (notGranted) {
             permissionLauncher.launch(permissionsToRequest.toTypedArray())
         } else {
-            startTrackingService()
+            viewModel.onAction(TrackingAction.ToggleTracking(true))
         }
-    }
-
-    private fun startTrackingService() {
-        viewModel.onAction(TrackingAction.ToggleTracking(true))
-        val serviceIntent = Intent(this, TrackingService::class.java)
-        ContextCompat.startForegroundService(this, serviceIntent)
     }
 }

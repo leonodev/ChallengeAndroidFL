@@ -8,6 +8,7 @@ import com.geobeacon.tracker.domain.repositories.SensorRepository
 import com.geobeacon.tracker.domain.repositories.SyncRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
@@ -23,13 +24,15 @@ class SyncWorker @AssistedInject constructor(
             if (unsynced.isNotEmpty()) {
                 val success = syncRepository.syncEvents(unsynced)
                 if (success) {
-                    val ids = unsynced.map { it.id }
-                    sensorRepository.markAsSynchronized(ids)
+                    val eventIds = unsynced.map { it.id }
+                    sensorRepository.markAsSynchronized(eventIds)
                 } else {
                     return Result.retry()
                 }
             }
             Result.success()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.retry()
         }
