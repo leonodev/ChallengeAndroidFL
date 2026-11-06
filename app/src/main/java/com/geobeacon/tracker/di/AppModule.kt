@@ -1,11 +1,12 @@
 package com.geobeacon.tracker.di
+
 import android.content.Context
 import androidx.room.Room
 import com.geobeacon.tracker.data.MockBleScanner
 import com.geobeacon.tracker.data.MockLocationTracker
 import com.geobeacon.tracker.data.local.AppDatabase
-import com.geobeacon.tracker.domain.DeviceScanner
-import com.geobeacon.tracker.domain.LocationTracker
+import com.geobeacon.tracker.domain.repositories.DeviceScanner
+import com.geobeacon.tracker.domain.repositories.LocationTracker
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

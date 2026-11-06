@@ -1,6 +1,7 @@
 package com.geobeacon.tracker.data
-import com.geobeacon.tracker.domain.BleDevice
-import com.geobeacon.tracker.domain.DeviceScanner
+
+import com.geobeacon.tracker.domain.models.BleDevice
+import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

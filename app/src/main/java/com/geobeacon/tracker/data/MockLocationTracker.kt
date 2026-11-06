@@ -1,6 +1,7 @@
 package com.geobeacon.tracker.data
-import com.geobeacon.tracker.domain.LocationData
-import com.geobeacon.tracker.domain.LocationTracker
+
+import com.geobeacon.tracker.domain.repositories.LocationData
+import com.geobeacon.tracker.domain.repositories.LocationTracker
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
