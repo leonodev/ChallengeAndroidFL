@@ -1,6 +1,6 @@
 # GeoBeacon Tracker
 
-GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture** y **MVVM**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica simulada.
+GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture** y **MVVM**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica garantizada con **WorkManager**.
 
 ---
 
@@ -42,7 +42,7 @@ El proyecto está estructurado estrictamente en tres capas principales:
 
 3. **Capa de Presentación y Servicios (`presentation/` y `service/`)**:
    - `TrackingViewModel` con patrón MVI ligero y `StateFlow` respaldado por `SharingStarted.WhileSubscribed(5000)`.
-   - `TrackingService` (Foreground Service) conectado al `TrackingManager`/`SyncManager` para persistencia en segundo plano.
+   - `TrackingService` (Foreground Service) conectado al `SyncManager` y WorkManager para persistencia y sincronización robusta en segundo plano.
 
 ---
 
@@ -52,13 +52,19 @@ El proyecto está estructurado estrictamente en tres capas principales:
 - **Por qué no `combine` puro**: `combine` emite cada vez que *cualquiera* de los dos flujos emite. Si el GPS se actualiza frecuentemente, volvería a registrar el mismo dispositivo BLE una y otra vez aunque este no haya cambiado, inflando la base de datos innecesariamente.
 - **La Solución**: Cada vez que el escáner BLE detecta un dispositivo (`deviceScanner.scanForDevices()`), tomamos la **última posición GPS conocida** en ese instante exacto (`locationTracker.getLocationFlow().take(1)`). Esto garantiza un registro preciso por cada escaneo BLE enriquecido con la geolocalización actual sin duplicados redundantes.
 - **Control de Presión (Backpressure)**: Se aplicaron los operadores `.buffer()` y `.conflate()` para gestionar ráfagas de emisiones de dispositivos BLE.
-- **Testabilidad**: Todos los dispatchers se inyectan mediante el calificador `@IoDispatcher`, permitiendo el uso de `TestDispatcher` en las pruebas unitarias.
+- **Testabilidad**: Todos los dispatchers se inyectan mediante el calificador `@IoDispatcher`, facilitando el uso de `TestDispatcher` en las pruebas unitarias.
+
+---
+
+## 🔄 Sincronización con WorkManager
+
+- **Por qué WorkManager**: Para garantizar que la sincronización de eventos pendientes con el servidor no dependa únicamente del ciclo de vida del servicio en primer plano, se implementó **`SyncWorker`** (con soporte de inyección Hilt via `@HiltWorker`).
+- **Funcionamiento**: Programa una tarea periódica cada 15 minutos (`PeriodicWorkRequestBuilder`) con restricciones explícitas de red (`NetworkType.CONNECTED`), asegurando entregas garantizadas y reintentos automáticos (`Result.retry()`) incluso ante reinicios del dispositivo.
 
 ---
 
 ## ⚖️ Trade-offs y Mejoras para Producción
 
-1. **Sincronización**: Actualmente se ejecuta mediante un loop en una corrutina de aplicación gestionada por `SyncManager`. Para producción, se recomienda migrar a **`WorkManager`** con restricciones de red y batería para garantizar entregas garantizadas incluso ante reinicios del dispositivo.
-2. **Reintentos**: Se implementó un reintento simple por intervalo; en producción se debe añadir **backgrowth / backoff exponencial**.
-3. **Retención de Datos**: Se utiliza una política simple de últimos 10 eventos en UI, pero en producción se requiere una política de purgado en Room para evitar crecimiento desmedido de la base de datos.
-4. **Observabilidad y CI**: Integración de Crashlytics, logging estructurado y pipelines de CI/CD para tests instrumentados y de DAO.
+1. **Backoff Exponencial**: Actualmente `SyncWorker` utiliza reintentos estándar; en producción se puede configurar `setBackoffCriteria` con retroceso exponencial.
+2. **Retención de Datos**: Se utiliza una política simple de últimos 10 eventos en UI, pero en producción se requiere una política de purgado en Room para evitar crecimiento desmedido de la base de datos a largo plazo.
+3. **Observabilidad y CI**: Integración de Crashlytics, logging estructurado y pipelines de CI/CD para tests instrumentados y de DAO.
