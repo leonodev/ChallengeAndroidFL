@@ -5,10 +5,14 @@ import androidx.room.Room
 import com.geobeacon.tracker.data.MockBleScanner
 import com.geobeacon.tracker.data.MockLocationTracker
 import com.geobeacon.tracker.data.local.AppDatabase
+import com.geobeacon.tracker.data.remote.MockRemoteDataSource
+import com.geobeacon.tracker.data.remote.RemoteDataSource
 import com.geobeacon.tracker.data.repository.SensorRepositoryImpl
+import com.geobeacon.tracker.data.repository.SyncRepositoryImpl
 import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import com.geobeacon.tracker.domain.repositories.LocationTracker
 import com.geobeacon.tracker.domain.repositories.SensorRepository
+import com.geobeacon.tracker.domain.repositories.SyncRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -24,9 +28,12 @@ abstract class DomainModule {
     abstract fun bindDeviceScanner(mockBleScanner: MockBleScanner): DeviceScanner
     @Binds
     abstract fun bindLocationTracker(mockLocationTracker: MockLocationTracker): LocationTracker
-
     @Binds
     abstract fun bindSensorRepository(sensorRepositoryImpl: SensorRepositoryImpl): SensorRepository
+    @Binds
+    abstract fun bindRemoteDataSource(mockRemoteDataSource: MockRemoteDataSource): RemoteDataSource
+    @Binds
+    abstract fun bindSyncRepository(syncRepositoryImpl: SyncRepositoryImpl): SyncRepository
 }
 
 @Module
