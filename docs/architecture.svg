@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="100%" height="100%" style="background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Arrowhead Marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+    </marker>
+    <!-- Green Arrowhead Marker -->
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+    </marker>
+  </defs>
+
+  <!-- TITLE -->
+  <text x="500" y="35" fill="#f8fafc" font-size="20" font-weight="bold" text-anchor="middle">GeoBeacon Tracker - Clean Architecture (Onion) Diagram</text>
+  <text x="500" y="55" fill="#94a3b8" font-size="13" text-anchor="middle">Inward Dependency Rule &amp; Component Flow</text>
+
+  <!-- 1. PRESENTATION & UI -->
+  <g transform="translate(40, 90)">
+    <rect width="430" height="75" rx="12" fill="#1d4ed8" stroke="#3b82f6" stroke-width="2" />
+    <text x="215" y="30" fill="#ffffff" font-size="15" font-weight="bold" text-anchor="middle">1. PRESENTATION LAYER (UI)</text>
+    <text x="215" y="50" fill="#93c5fd" font-size="12" text-anchor="middle">MainActivity • TrackingViewModel • StateFlow • ViewBinding</text>
+  </g>
+
+  <!-- 2. SERVICE & BACKGROUND (WORKMANAGER) -->
+  <g transform="translate(530, 90)">
+    <rect width="430" height="75" rx="12" fill="#4c1d95" stroke="#8b5cf6" stroke-width="2" />
+    <text x="215" y="30" fill="#ede9fe" font-size="15" font-weight="bold" text-anchor="middle">2. SERVICE LAYER (Background)</text>
+    <text x="215" y="50" fill="#ddd6fe" font-size="12" text-anchor="middle">TrackingService (Foreground) • SyncWorker (@HiltWorker)</text>
+  </g>
+
+  <!-- 3. DATA LAYER -->
+  <g transform="translate(40, 230)">
+    <rect width="430" height="90" rx="12" fill="#7f1d1d" stroke="#f43f5e" stroke-width="2" />
+    <text x="215" y="30" fill="#fecdd3" font-size="15" font-weight="bold" text-anchor="middle">3. DATA LAYER (Infrastructure &amp; Storage)</text>
+    <text x="215" y="50" fill="#fda4af" font-size="12" text-anchor="middle">Room DB (AppDatabase, SensorDao, SensorEntity)</text>
+    <text x="215" y="68" fill="#fda4af" font-size="12" text-anchor="middle">SensorRepositoryImpl • SyncRepositoryImpl • MockRemote</text>
+  </g>
+
+  <!-- DI CONTAINER -->
+  <g transform="translate(530, 230)">
+    <rect width="430" height="90" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="2" />
+    <text x="215" y="30" fill="#a7f3d0" font-size="15" font-weight="bold" text-anchor="middle">DEPENDENCY INJECTION (Hilt)</text>
+    <text x="215" y="50" fill="#6ee7b7" font-size="12" text-anchor="middle">GeoBeaconApp • AppModule • DatabaseModule</text>
+    <text x="215" y="68" fill="#6ee7b7" font-size="12" text-anchor="middle">CoroutinesModule (Dispatcher Bindings)</text>
+  </g>
+
+  <!-- 4. CAPA DOMAIN -->
+  <g transform="translate(40, 380)">
+    <rect width="920" height="85" rx="12" fill="#7c2d12" stroke="#ea580c" stroke-width="2" />
+    <text x="460" y="32" fill="#ffedd5" font-size="16" font-weight="bold" text-anchor="middle">4. DOMAIN LAYER (Pure Kotlin - Zero Framework Dependencies)</text>
+    <text x="460" y="54" fill="#fed7aa" font-size="13" text-anchor="middle">Models (GeoPoint, BleDevice, SensorEvent) • Repository Interfaces</text>
+    <text x="460" y="71" fill="#fed7aa" font-size="12" font-style="italic" text-anchor="middle">Use Cases: ObserveCombinedSensorDataUseCase • StartTrackingUseCase • GetLastEventsUseCase</text>
+  </g>
+
+  <!-- 5. CORE / UTILS -->
+  <g transform="translate(40, 520)">
+    <rect width="920" height="80" rx="12" fill="#1e3a8a" stroke="#2563eb" stroke-width="2" />
+    <text x="460" y="30" fill="#dbeafe" font-size="16" font-weight="bold" text-anchor="middle">5. CORE / TRANSVERSAL</text>
+    <text x="460" y="50" fill="#bfdbfe" font-size="12" text-anchor="middle">Qualifiers (@IoDispatcher, @MainDispatcher, @ApplicationScope)</text>
+    <text x="460" y="66" fill="#60a5fa" font-size="11" font-weight="bold" text-anchor="middle">ZERO DEPENDENCIES UPWARD (Agnostic to Domain, Data and UI)</text>
+  </g>
+
+  <!-- CONNECTIONS & ARROWS (INWARD / DOWNWARD) -->
+
+  <!-- UI -> Domain -->
+  <path d="M 255 165 L 255 380" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Service -> Domain -->
+  <path d="M 745 165 L 745 380" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)" />
+
+  <!-- Data -> Domain -->
+  <path d="M 255 320 L 255 380" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-green)" />
+
+  <!-- DI -> Data & Service -->
+  <path d="M 745 320 L 745 380" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow)" />
+
+  <!-- Domain -> Core -->
+  <path d="M 460 465 L 460 520" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow)" />
+
+</svg>

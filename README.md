@@ -29,6 +29,8 @@ GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los
 
 El proyecto respeta estrictamente la **Regla de Dependencia** apuntando siempre hacia el centro (Dominio):
 
+![Architecture Diagram](./docs/architecture.svg)
+
 1. **Capa de Dominio (`domain/`)**:
    - Modelos puros de negocio (`models/`: `GeoPoint`, `BleDevice`, `SensorEvent` componiendo `GeoPoint`).
    - Contratos de repositorios (`repositories/`) y Casos de Uso (`usecases/`).
