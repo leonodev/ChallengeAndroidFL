@@ -7,6 +7,7 @@ import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import com.geobeacon.tracker.domain.repositories.LocationTracker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -42,8 +43,34 @@ class ObserveCombinedSensorDataUseCaseTest {
             val item = awaitItem()
             assertEquals("AA:BB:CC:DD:EE:FF", item.macAddress)
             assertEquals(-70, item.rssi)
-            assertEquals(-2.0, item.latitude, 0.001)
-            assertEquals(-79.0, item.longitude, 0.001)
+            assertEquals(-2.0, item.location.latitude, 0.001)
+            assertEquals(-79.0, item.location.longitude, 0.001)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `test late GPS location emits correctly once available`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val testScope = CoroutineScope(testDispatcher)
+
+        val locationTracker = FakeLocationTracker(
+            flow {
+                delay(1000)
+                emit(GeoPoint(-2.5, -79.5))
+            }
+        )
+        val deviceScanner = FakeDeviceScanner(
+            flow { emit(BleDevice("11:22:33:44:55:66", -65, 2000L)) }
+        )
+
+        val useCase = ObserveCombinedSensorDataUseCase(locationTracker, deviceScanner, testScope)
+
+        useCase().test {
+            val item = awaitItem()
+            assertEquals("11:22:33:44:55:66", item.macAddress)
+            assertEquals(-2.5, item.location.latitude, 0.001)
+            assertEquals(-79.5, item.location.longitude, 0.001)
             awaitComplete()
         }
     }

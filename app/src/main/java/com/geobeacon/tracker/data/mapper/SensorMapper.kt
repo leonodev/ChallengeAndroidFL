@@ -1,6 +1,7 @@
 package com.geobeacon.tracker.data.mapper
 
 import com.geobeacon.tracker.data.local.SensorEntity
+import com.geobeacon.tracker.domain.models.GeoPoint
 import com.geobeacon.tracker.domain.models.SensorEvent
 
 fun SensorEntity.toDomain(): SensorEvent {
@@ -8,8 +9,7 @@ fun SensorEntity.toDomain(): SensorEvent {
         id = id.toLong(),
         macAddress = macAddress,
         rssi = rssi,
-        latitude = latitude,
-        longitude = longitude,
+        location = GeoPoint(latitude = latitude, longitude = longitude, timestamp = timestamp),
         timestamp = timestamp
     )
 }
@@ -19,8 +19,8 @@ fun SensorEvent.toEntity(synced: Boolean = false): SensorEntity {
         id = if (id > 0L) id.toInt() else 0,
         macAddress = macAddress,
         rssi = rssi,
-        latitude = latitude,
-        longitude = longitude,
+        latitude = location.latitude,
+        longitude = location.longitude,
         timestamp = timestamp,
         synced = synced
     )

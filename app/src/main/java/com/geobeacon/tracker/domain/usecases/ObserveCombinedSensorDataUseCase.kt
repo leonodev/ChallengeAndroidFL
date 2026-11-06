@@ -19,7 +19,7 @@ class ObserveCombinedSensorDataUseCase @Inject constructor(
     private val locationStateFlow: StateFlow<GeoPoint?> = locationTracker.getLocationFlow()
         .stateIn(
             scope = externalScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = null
         )
 
@@ -35,8 +35,7 @@ class ObserveCombinedSensorDataUseCase @Inject constructor(
                         SensorEvent(
                             macAddress = bleDevice.macAddress,
                             rssi = bleDevice.rssi,
-                            latitude = location.latitude,
-                            longitude = location.longitude,
+                            location = location,
                             timestamp = bleDevice.timestamp
                         )
                     }

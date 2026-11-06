@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                     for (event in state.lastEvents) {
                         val timeStr = sdf.format(Date(event.timestamp))
                         sb.append("[$timeStr] MAC: ${event.macAddress}\n")
-                        sb.append("  RSSI: ${event.rssi} | Lat: ${String.format(Locale.US, "%.4f", event.latitude)}, Lon: ${String.format(Locale.US, "%.4f", event.longitude)}\n\n")
+                        sb.append("  RSSI: ${event.rssi} | Lat: ${String.format(Locale.US, "%.4f", event.location.latitude)}, Lon: ${String.format(Locale.US, "%.4f", event.location.longitude)}\n\n")
                     }
                     binding.tvEvents.text = if (sb.isEmpty()) "No tracking events yet." else sb.toString()
                 }

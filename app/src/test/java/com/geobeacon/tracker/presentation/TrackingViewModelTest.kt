@@ -2,6 +2,7 @@ package com.geobeacon.tracker.presentation
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.turbine.test
+import com.geobeacon.tracker.domain.models.GeoPoint
 import com.geobeacon.tracker.domain.models.SensorEvent
 import com.geobeacon.tracker.domain.usecases.GetLastEventsUseCase
 import io.mockk.coEvery
@@ -41,7 +42,7 @@ class TrackingViewModelTest {
     @Test
     fun `test initial state and events update`() = runTest {
         val events = listOf(
-            SensorEvent(1L, "AA:BB:CC:DD:EE:FF", -60, -2.0, -79.0, 1000L)
+            SensorEvent(1L, "AA:BB:CC:DD:EE:FF", -60, GeoPoint(-2.0, -79.0), 1000L)
         )
         coEvery { getLastEventsUseCase() } returns flowOf(events)
 

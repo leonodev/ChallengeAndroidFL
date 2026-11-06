@@ -1,6 +1,6 @@
 # GeoBeacon Tracker
 
-GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture** y **MVVM**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica garantizada con **WorkManager**.
+GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture estricta (Arquitectura Onion)**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica garantizada con **WorkManager**.
 
 ---
 
@@ -25,46 +25,46 @@ GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los
 
 ---
 
-## 🏛️ Decisiones de Arquitectura
+## 🏛️ Decisiones de Arquitectura (Clean Architecture / Onion)
 
-El proyecto está estructurado estrictamente en tres capas principales:
+El proyecto respeta estrictamente la **Regla de Dependencia** apuntando siempre hacia el centro (Dominio):
 
 1. **Capa de Dominio (`domain/`)**:
-   - Modelos puros de Kotlin (`models/`: `GeoPoint`, `BleDevice`, `SensorEvent`).
-   - Contratos de repositorios (`repositories/`: `SensorRepository`, `SyncRepository`, `DeviceScanner`, `LocationTracker`).
-   - Casos de uso (`usecases/`: `StartTrackingUseCase`, `StopTrackingUseCase`, `ObserveCombinedSensorDataUseCase`, `GetLastEventsUseCase`).
-   - **Cero dependencias de Android o Room**.
+   - Modelos puros de negocio (`models/`: `GeoPoint`, `BleDevice`, `SensorEvent` componiendo `GeoPoint`).
+   - Contratos de repositorios (`repositories/`) y Casos de Uso (`usecases/`).
+   - **Cero dependencias** de Android, Room o frameworks de Inyección de Dependencias (los Qualifiers residen en `core/`).
 
 2. **Capa de Datos (`data/`)**:
-   - Base de datos Room (`AppDatabase`, `SensorDao`, `SensorEntity` con campo `synced`).
-   - Mappers (`SensorMapper.kt`) para transformaciones bidireccionales Entity ↔ Domain.
+   - Base de datos Room (`AppDatabase`, `SensorDao`, `SensorEntity` gestionando el estado de persistencia `synced`).
+   - Mappers bidireccionales (`SensorMapper.kt`) para transformar Entity ↔ Domain.
    - Implementaciones de repositorios (`SensorRepositoryImpl`, `SyncRepositoryImpl`) y fuente de datos remota (`MockRemoteDataSource`).
 
 3. **Capa de Presentación y Servicios (`presentation/` y `service/`)**:
-   - `TrackingViewModel` con patrón MVI ligero y `StateFlow` respaldado por `SharingStarted.WhileSubscribed(5000)`.
-   - `TrackingService` (Foreground Service) conectado al `SyncManager` y WorkManager para persistencia y sincronización robusta en segundo plano.
+   - `TrackingViewModel` con estado reactivo `StateFlow` (`SharingStarted.WhileSubscribed(5000)`).
+   - `TrackingService` (Foreground Service) configurado con tipos de servicios en primer plano para ubicación (Android 14 API 34+) e integrado con WorkManager.
 
 ---
 
 ## 🌊 Justificación sobre la Combinación de Flujos (Fase 2)
 
-- **Operador Elegido**: **`flatMapLatest`** combinado con `.take(1)` sobre el flujo de ubicación.
-- **Por qué no `combine` puro**: `combine` emite cada vez que *cualquiera* de los dos flujos emite. Si el GPS se actualiza frecuentemente, volvería a registrar el mismo dispositivo BLE una y otra vez aunque este no haya cambiado, inflando la base de datos innecesariamente.
-- **La Solución**: Cada vez que el escáner BLE detecta un dispositivo (`deviceScanner.scanForDevices()`), tomamos la **última posición GPS conocida** en ese instante exacto (`locationTracker.getLocationFlow().take(1)`). Esto garantiza un registro preciso por cada escaneo BLE enriquecido con la geolocalización actual sin duplicados redundantes.
-- **Control de Presión (Backpressure)**: Se aplicaron los operadores `.buffer()` y `.conflate()` para gestionar ráfagas de emisiones de dispositivos BLE.
-- **Testabilidad**: Todos los dispatchers se inyectan mediante el calificador `@IoDispatcher`, facilitando el uso de `TestDispatcher` en las pruebas unitarias.
+- **Operador Elegido**: **`flatMapLatest`** combinado con un `StateFlow` en caliente (`stateIn`) y `.filterNotNull().take(1)`.
+- **Por qué no `combine` puro**: `combine` emite cada vez que *cualquiera* de los dos flujos emite, lo que registraría duplicados redundantes de dispositivos BLE ante cada tick del GPS.
+- **La Solución**: La ubicación se comparte como `StateFlow` (`SharingStarted.Eagerly`). Cuando el escáner BLE detecta un dispositivo, se combina con la última posición GPS conocida (`locationStateFlow.filterNotNull().take(1)`), garantizando un registro preciso por cada escaneo BLE sin duplicados y manejando de forma robusta la llegada tardía del GPS (*late GPS*).
+- **Control de Presión (Backpressure)**: Se aplicó `.buffer(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)`.
+- **Testabilidad**: Los despachadores se inyectan mediante el calificador `@IoDispatcher`, permitiendo pruebas unitarias deterministas con `TestDispatcher`.
 
 ---
 
-## 🔄 Sincronización con WorkManager
+## 🔄 Sincronización con WorkManager (Fase 4)
 
-- **Por qué WorkManager**: Para garantizar que la sincronización de eventos pendientes con el servidor no dependa únicamente del ciclo de vida del servicio en primer plano, se implementó **`SyncWorker`** (con soporte de inyección Hilt via `@HiltWorker`).
-- **Funcionamiento**: Programa una tarea periódica cada 15 minutos (`PeriodicWorkRequestBuilder`) con restricciones explícitas de red (`NetworkType.CONNECTED`), asegurando entregas garantizadas y reintentos automáticos (`Result.retry()`) incluso ante reinicios del dispositivo.
+- **Por qué WorkManager**: Para garantizar que la sincronización de eventos pendientes con el servidor no dependa exclusivamente del Foreground Service.
+- **Implementación**: `SyncWorker` (anotado con `@HiltWorker` y `@AssistedInject`) procesa registros pendientes de Room, los sube mediante `SyncRepository` y marca los IDs como sincronizados.
+- **Configuración**: Tarea periódica única (`enqueueUniquePeriodicWork`) cada 15 minutos con restricciones de red (`NetworkType.CONNECTED`) y reintentos automáticos (`Result.retry()`).
 
 ---
 
 ## ⚖️ Trade-offs y Mejoras para Producción
 
-1. **Backoff Exponencial**: Actualmente `SyncWorker` utiliza reintentos estándar; en producción se puede configurar `setBackoffCriteria` con retroceso exponencial.
-2. **Retención de Datos**: Se utiliza una política simple de últimos 10 eventos en UI, pero en producción se requiere una política de purgado en Room para evitar crecimiento desmedido de la base de datos a largo plazo.
+1. **Backoff Exponencial**: Configurar `setBackoffCriteria` con retroceso exponencial en `SyncWorker`.
+2. **Retención de Datos**: Política de purgado en Room para evitar crecimiento ilimitado de la base de datos a largo plazo.
 3. **Observabilidad y CI**: Integración de Crashlytics, logging estructurado y pipelines de CI/CD para tests instrumentados y de DAO.
