@@ -1,9 +1,8 @@
 package com.geobeacon.tracker.domain.repositories
 
+import com.geobeacon.tracker.domain.models.GeoPoint
 import kotlinx.coroutines.flow.Flow
 
-data class LocationData(val latitude: Double, val longitude: Double)
-
 interface LocationTracker {
-    fun getLocationFlow(): Flow<LocationData>
+    fun getLocationFlow(): Flow<GeoPoint>
 }

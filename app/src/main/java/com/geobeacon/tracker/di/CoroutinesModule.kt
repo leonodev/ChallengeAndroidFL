@@ -1,5 +1,8 @@
 package com.geobeacon.tracker.di
 
+import com.geobeacon.tracker.core.ApplicationScope
+import com.geobeacon.tracker.core.IoDispatcher
+import com.geobeacon.tracker.core.MainDispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -8,17 +11,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import javax.inject.Qualifier
 import javax.inject.Singleton
-
-@Qualifier
-annotation class IoDispatcher
-
-@Qualifier
-annotation class MainDispatcher
-
-@Qualifier
-annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)

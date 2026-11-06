@@ -10,12 +10,11 @@ fun SensorEntity.toDomain(): SensorEvent {
         rssi = rssi,
         latitude = latitude,
         longitude = longitude,
-        timestamp = timestamp,
-        synced = synced
+        timestamp = timestamp
     )
 }
 
-fun SensorEvent.toEntity(): SensorEntity {
+fun SensorEvent.toEntity(synced: Boolean = false): SensorEntity {
     return SensorEntity(
         id = if (id > 0L) id.toInt() else 0,
         macAddress = macAddress,

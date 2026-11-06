@@ -41,7 +41,7 @@ class TrackingViewModelTest {
     @Test
     fun `test initial state and events update`() = runTest {
         val events = listOf(
-            SensorEvent(1L, "AA:BB:CC:DD:EE:FF", -60, -2.0, -79.0, 1000L, false)
+            SensorEvent(1L, "AA:BB:CC:DD:EE:FF", -60, -2.0, -79.0, 1000L)
         )
         coEvery { getLastEventsUseCase() } returns flowOf(events)
 

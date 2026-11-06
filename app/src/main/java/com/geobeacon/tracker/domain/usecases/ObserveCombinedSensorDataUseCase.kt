@@ -1,38 +1,45 @@
 package com.geobeacon.tracker.domain.usecases
 
-import com.geobeacon.tracker.di.IoDispatcher
+import com.geobeacon.tracker.core.ApplicationScope
+import com.geobeacon.tracker.domain.models.GeoPoint
 import com.geobeacon.tracker.domain.models.SensorEvent
 import com.geobeacon.tracker.domain.repositories.DeviceScanner
 import com.geobeacon.tracker.domain.repositories.LocationTracker
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 class ObserveCombinedSensorDataUseCase @Inject constructor(
     private val locationTracker: LocationTracker,
     private val deviceScanner: DeviceScanner,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @ApplicationScope private val externalScope: CoroutineScope
 ) {
+    private val locationStateFlow: StateFlow<GeoPoint?> = locationTracker.getLocationFlow()
+        .stateIn(
+            scope = externalScope,
+            started = SharingStarted.Lazily,
+            initialValue = null
+        )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(): Flow<SensorEvent> {
         return deviceScanner.scanForDevices()
-            .buffer() // Control data pressure and backpressure
-            .conflate() // Conflate rapid emissions if needed
+            .buffer(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             .flatMapLatest { bleDevice ->
-                locationTracker.getLocationFlow()
-                    .take(1) // Get the latest known location at the moment of BLE scan
+                locationStateFlow
+                    .filterNotNull()
+                    .take(1)
                     .map { location ->
                         SensorEvent(
                             macAddress = bleDevice.macAddress,
                             rssi = bleDevice.rssi,
                             latitude = location.latitude,
                             longitude = location.longitude,
-                            timestamp = bleDevice.timestamp,
-                            synced = false
+                            timestamp = bleDevice.timestamp
                         )
                     }
             }
-            .flowOn(ioDispatcher) // Injectable dispatcher for testability
     }
 }

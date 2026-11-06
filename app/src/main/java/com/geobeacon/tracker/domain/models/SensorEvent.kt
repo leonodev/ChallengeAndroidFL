@@ -6,6 +6,5 @@ data class SensorEvent(
     val rssi: Int,
     val latitude: Double,
     val longitude: Double,
-    val timestamp: Long,
-    val synced: Boolean = false
+    val timestamp: Long
 )

@@ -1,9 +1,9 @@
 package com.geobeacon.tracker.data.repository
 
+import com.geobeacon.tracker.core.IoDispatcher
 import com.geobeacon.tracker.data.local.SensorDao
 import com.geobeacon.tracker.data.mapper.toDomain
 import com.geobeacon.tracker.data.mapper.toEntity
-import com.geobeacon.tracker.di.IoDispatcher
 import com.geobeacon.tracker.domain.models.SensorEvent
 import com.geobeacon.tracker.domain.repositories.SensorRepository
 import kotlinx.coroutines.CoroutineDispatcher
