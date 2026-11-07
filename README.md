@@ -1,82 +1,82 @@
 # GeoBeacon Tracker
 
-GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica garantizada con **WorkManager**.
+GeoBeacon Tracker is an Android application developed in **Kotlin** following strict **Clean Architecture** principles. It is designed for background capturing of GPS location and BLE (Bluetooth Low Energy) device scanning, reactive local persistence using Room, and guaranteed periodic synchronization with **WorkManager**.
 
 ---
 
-## 🤖 Historial de Desarrollo (AI Collaboration)
+## 🤖 Development History (AI Collaboration)
 
-- Para demostrar el uso maduro de asistentes virtuales en el proceso de desarrollo y arquitectura, los prompts y directrices exactas que dictaron la evolución de este proyecto (dividido en 6 fases) se han documentado y se encuentran disponibles para su evaluación en el directorio raíz `.ai-history/`.
+- To demonstrate the mature use of AI assistants in the development and architecture process, the exact prompts and guidelines that dictated the evolution of this project (divided into 6 phases) have been documented and are available for evaluation in the `.ai-history/` root directory.
 
-## 🗺️ Roadmap (Plan de Ejecución)
-El desarrollo de este proyecto se llevó a cabo por medio de un análisis previo que dio como resultado el desarrollo por fases apoyado por IA. Dichas fases y justificaciones arquitectónicas se encuentran reflejadas en el archivo `00-project-roadmap.md`, el cual está disponible en el directorio raíz `.ai-history/`.
+## 🗺️ Roadmap (Execution Plan)
+The development of this project was carried out through an initial analysis that resulted in a phase-by-phase development supported by AI. These phases and architectural justifications are reflected in the `00-project-roadmap.md` file, which is available in the `.ai-history/` root directory.
 
-## 🚀 Cómo Compilar y Ejecutar
+## 🚀 How to Build and Run
 
-### Requisitos
-- **Android Studio** (Hedgehog o superior recomendado).
+### Requirements
+- **Android Studio** (Hedgehog or higher recommended).
 - **JDK 17**.
 - **Android SDK** (Compile SDK / Target SDK: 34, Min SDK: 26).
 
-### Pasos
-1. Clonar o abrir el proyecto en Android Studio.
-2. Sincronizar el proyecto con Gradle (`File > Sync Project with Gradle Files`).
-3. Ejecutar las pruebas unitarias:
+### Steps
+1. Clone or open the project in Android Studio.
+2. Sync the project with Gradle (`File > Sync Project with Gradle Files`).
+3. Run the unit tests:
    ```bash
    ./gradlew testDebugUnitTest
    ```
-4. Compilar e instalar la app en un emulador o dispositivo físico (API 26+):
+4. Build and install the app on an emulator or physical device (API 26+):
    ```bash
    ./gradlew assembleDebug
    ```
 
 ---
 
-## 🏛️ Decisiones de Arquitectura (Clean Architecture)
+## 🏛️ Architectural Decisions (Clean Architecture)
 
-El proyecto respeta estrictamente la **Regla de Dependencia** apuntando siempre hacia el centro (Dominio):
+The project strictly respects the **Dependency Rule**, always pointing towards the center (Domain):
 
 ![Architecture Diagram](./docs/architecture.svg)
 
-1. **Capa de Dominio (`domain/`)**:
-   - Modelos puros de negocio (`models/`: `GeoPoint`, `BleDevice`, `SensorEvent` componiendo `GeoPoint`).
-   - Contratos de repositorios (`repositories/`) y Casos de Uso (`usecases/`).
-   - **Cero dependencias** de Android, Room o frameworks de Inyección de Dependencias (los Qualifiers residen en `core/`).
+1. **Domain Layer (`domain/`)**:
+   - Pure business models (`models/`: `GeoPoint`, `BleDevice`, `SensorEvent` composing `GeoPoint`).
+   - Repository contracts (`repositories/`) and Use Cases (`usecases/`).
+   - **Zero dependencies** on Android, Room, or Dependency Injection frameworks (Qualifiers reside in `core/`).
 
-2. **Capa de Datos (`data/`)**:
-   - Base de datos Room (`AppDatabase`, `SensorDao`, `SensorEntity` gestionando el estado de persistencia `synced`).
-   - Mappers bidireccionales (`SensorMapper.kt`) para transformar Entity ↔ Domain.
-   - Implementaciones de repositorios (`SensorRepositoryImpl`, `SyncRepositoryImpl`) y fuente de datos remota (`MockRemoteDataSource`).
+2. **Data Layer (`data/`)**:
+   - Room Database (`AppDatabase`, `SensorDao`, `SensorEntity` managing the `synced` persistence state).
+   - Bidirectional Mappers (`SensorMapper.kt`) to transform Entity ↔ Domain.
+   - Repository implementations (`SensorRepositoryImpl`, `SyncRepositoryImpl`) and remote data source (`MockRemoteDataSource`).
 
-3. **Capa de Presentación y Servicios (`presentation/` y `service/`)**:
-   - `TrackingViewModel` con estado reactivo `StateFlow` (`SharingStarted.WhileSubscribed(5000)`).
-   - `TrackingService` (Foreground Service) configurado con tipos de servicios en primer plano para ubicación (Android 14 API 34+) e integrado con WorkManager.
-
----
-
-## 🌊 Justificación sobre la Combinación de Flujos (Manejo del Hardware)
-
-El principal reto técnico del desarrollo con hardware real es la asincronía. Mientras el escáner BLE puede emitir ráfagas de dispositivos casi de inmediato, el sensor GPS a menudo requiere de varios segundos para fijar su primera posición (el conocido "GPS Cold Start").
-
-Para orquestar esta combinación en el caso de uso `ObserveCombinedSensorDataUseCase`:
-- **La Solución (Búfer en Memoria)**: En lugar de utilizar operadores estándares como `combine` o `flatMapLatest` —los cuales perderían emisiones rápidas del BLE mientras esperan al GPS— se optó por usar `channelFlow` implementando un búfer local (`mutableListOf`). 
-- **Cero Pérdida de Datos**: Durante el arranque en frío del GPS, los dispositivos BLE detectados no se descartan ni saturan los hilos del sistema (previniendo *backpressure*); en cambio, se acumulan en el búfer. En el instante exacto en que el GPS entrega la primera coordenada válida, el búfer completo es volcado hacia la base de datos (Room) asignándoles esa posición, para luego seguir emitiendo en tiempo real.
-- **Testabilidad Asíncrona**: Para demostrar la robustez de esta decisión, se implementaron pruebas unitarias avanzadas utilizando `runTest` y `Turbine`, simulando latencias intencionales en la emisión del flujo simulado del GPS.
+3. **Presentation and Services Layer (`presentation/` and `service/`)**:
+   - `TrackingViewModel` with reactive state `StateFlow` (`SharingStarted.WhileSubscribed(5000)`).
+   - `TrackingService` (Foreground Service) configured with foreground service types for location (Android 14 API 34+) and integrated with WorkManager.
 
 ---
 
-## 🔄 Sincronización con WorkManager
+## 🌊 Flow Combining Justification (Hardware Management)
 
-- **Por qué WorkManager**: Para garantizar que la sincronización de eventos pendientes con el servidor no dependa exclusivamente de ciclos temporales manuales y respete el estado del dispositivo.
-- **Implementación**: `SyncWorker` (anotado con `@HiltWorker` y `@AssistedInject`) procesa registros pendientes de Room, los sube mediante `SyncRepository` y solo marca los IDs como sincronizados tras un éxito rotundo.
-- **Configuración**: Tarea periódica única (`enqueueUniquePeriodicWork`) configurada a 15 minutos, con estrictas restricciones de red (`NetworkType.CONNECTED`) provistas por el SO de Android.
+The main technical challenge when developing with real hardware is asynchrony. While the BLE scanner can emit bursts of devices almost immediately, the GPS sensor often requires several seconds to fix its first position (the well-known "GPS Cold Start").
+
+To orchestrate this combination in the `ObserveCombinedSensorDataUseCase` use case:
+- **The Solution (In-Memory Buffer)**: Instead of using standard operators like `combine` or `flatMapLatest`—which would lose fast BLE emissions while waiting for the GPS—I chose to use `channelFlow`, implementing a local buffer (`mutableListOf`). 
+- **Zero Data Loss**: During the GPS cold start, detected BLE devices are not discarded, nor do they saturate the system threads (preventing *backpressure*); instead, they are accumulated in the buffer. The exact moment the GPS delivers the first valid coordinate, the entire buffer is flushed to the database (Room) assigning them that position, and then it continues emitting in real-time.
+- **Asynchronous Testability**: To demonstrate the robustness of this decision, advanced unit tests were implemented using `runTest` and `Turbine`, simulating intentional latencies in the GPS simulated flow emission.
 
 ---
 
-## ⚠️ Edge Cases y Escalabilidad (Trade-offs)
+## 🔄 Synchronization with WorkManager
 
-Aunque el búfer en memoria resuelve elegantemente los arranques en frío cortos (GPS Cold Starts de segundos o pocos minutos), soy consciente de que en un escenario extremo de la vida real (ej. duramnte x minutos no se puede obtener geolocalizacion  mientras tanto se cambia de ubicacion y el escáner sigue leyendo y en este punto se obtiene localicazion, con lo cual se genera un problema grave y un falso positivo de geolocalización al asignar la coordenada final a cajas leídas hace media hora.
+- **Why WorkManager**: To ensure that the synchronization of pending events with the server does not rely exclusively on manual time cycles and respects the device's state.
+- **Implementation**: `SyncWorker` (annotated with `@HiltWorker` and `@AssistedInject`) processes pending Room records, uploads them via `SyncRepository`, and only marks the IDs as synchronized after a resounding success.
+- **Configuration**: Single periodic task (`enqueueUniquePeriodicWork`) set to 15 minutes, with strict network constraints (`NetworkType.CONNECTED`) provided by the Android OS.
 
-Para un entorno de **Producción a gran escala**, se aplicarían las siguientes posibles soluciones arquitectónicas:
-1. **Time-To-Live (TTL) del Búfer**: Implementar una política de descarte por antigüedad, eliminando del búfer aquellas lecturas BLE que tengan más de 2 minutos de antigüedad sin haber podido obtener un GPS.
-2. **Persistencia Agonóstica (Nullable Location)**: Modificar el modelo de negocio para aceptar eventos con ubicación nula (`val location: GeoPoint?`). Esto permitiría guardar en Room de inmediato la lectura BLE y enviarla a la central, permitiendo que los algoritmos de la empresa infieran la posición basándose en los tiempos y rutas del vehículo, sin bloquear la ingesta de datos móviles.
+---
+
+## ⚠️ Edge Cases and Scalability (Trade-offs)
+
+Although the in-memory buffer elegantly resolves short cold starts (GPS Cold Starts of seconds or a few minutes), I am aware that in an extreme real-life scenario (e.g., for X minutes geolocation cannot be obtained while changing location, and the scanner keeps reading until a location is finally obtained), a serious problem and a geolocation false positive would be generated by assigning the final coordinate to boxes read half an hour ago.
+
+For a **large-scale Production** environment, the following architectural solutions would be applied:
+1. **Buffer Time-To-Live (TTL)**: Implement an age-based discard policy, removing from the buffer those BLE readings that are more than 2 minutes old without having been able to obtain a GPS fix.
+2. **Agnostic Persistence (Nullable Location)**: Modify the business model to accept events with a null location (`val location: GeoPoint?`). This would allow the BLE reading to be immediately saved in Room and sent to the central server, allowing the company's algorithms to infer the position based on the vehicle's times and routes, without blocking the mobile data ingestion.
