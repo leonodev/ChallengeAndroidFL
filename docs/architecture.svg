@@ -11,7 +11,7 @@
   </defs>
 
   <!-- TITLE -->
-  <text x="500" y="35" fill="#f8fafc" font-size="20" font-weight="bold" text-anchor="middle">GeoBeacon Tracker - Clean Architecture (Onion) Diagram</text>
+  <text x="500" y="35" fill="#f8fafc" font-size="20" font-weight="bold" text-anchor="middle">GeoBeacon Tracker - Clean Architecture Diagram</text>
   <text x="500" y="55" fill="#94a3b8" font-size="13" text-anchor="middle">Inward Dependency Rule &amp; Component Flow</text>
 
   <!-- 1. PRESENTATION & UI -->
@@ -48,8 +48,8 @@
   <g transform="translate(40, 380)">
     <rect width="920" height="85" rx="12" fill="#7c2d12" stroke="#ea580c" stroke-width="2" />
     <text x="460" y="32" fill="#ffedd5" font-size="16" font-weight="bold" text-anchor="middle">4. DOMAIN LAYER (Pure Kotlin - Zero Framework Dependencies)</text>
-    <text x="460" y="54" fill="#fed7aa" font-size="13" text-anchor="middle">Models (GeoPoint, BleDevice, SensorEvent) • Repository Interfaces</text>
-    <text x="460" y="71" fill="#fed7aa" font-size="12" font-style="italic" text-anchor="middle">Use Cases: ObserveCombinedSensorDataUseCase • StartTrackingUseCase • GetLastEventsUseCase</text>
+    <text x="460" y="54" fill="#fed7aa" font-size="13" text-anchor="middle">Models (GeoPoint, BleDevice, SensorEvent) • Interfaces (SensorRepository, TrackingController)</text>
+    <text x="460" y="71" fill="#fed7aa" font-size="12" font-style="italic" text-anchor="middle">Use Cases: ObserveCombinedSensorDataUseCase • StartTrackingUseCase • RecordSensorEventsUseCase</text>
   </g>
 
   <!-- 5. CORE / UTILS -->
