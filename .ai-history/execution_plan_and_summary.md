@@ -4,11 +4,17 @@ Este documento registra el plan de desarrollo ejecutado fase por fase para el ch
 
 ---
 
-## Resumen de Fases y Decisiones Técnicas
+## Lee detenidamente y analiza el siguiente instructivo como base para las deciciones tecnicas que vamos definir
+- **[instrucciones base](instructions.md).**
+
+## Contexto y Objetivo
+- Despues de analizar el [instrucciones base](instructions.md) vamos a definir el desarrollo por fases, asi podremos dividirlo en tareas mas cortas y mejor enfocadas. 
+
+## Resumen del analisis y fases resultantes con decisiones técnicas
 
 ### Fase 0: Reconocimiento y Preparación (Arquitectura Base)
 - **Análisis del Boilerplate**: Inspección de `LocationTracker`, `DeviceScanner`, Room DAO y servicios base.
-- **Estructura de Paquetes**: Adopción estricta de Clean Architecture + Patrón MVVM (MVI-like) segregados por capas:
+- **Estructura de Paquetes**: Adopción estricta de Clean Architecture segregados por capas:
   - `domain/models/`, `domain/repositories/`, `domain/usecases/`
   - `data/local/`, `data/remote/`, `data/repository/`, `data/mapper/`
   - `presentation/`, `di/`, `core/`, `service/`
@@ -38,3 +44,4 @@ Este documento registra el plan de desarrollo ejecutado fase por fase para el ch
 
 ### Fase 6: Documentación y Entrega
 - Documentación exhaustiva y honesta en `README.md`, detallando arquitectura, la resolución del problema de asincronía de hardware, trade-offs (Doze Mode vs Foreground Service timing), y deuda técnica asumida para cumplir el tiempo estimado.
+

@@ -1,6 +1,6 @@
 # GeoBeacon Tracker
 
-GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture estricta (Arquitectura Onion)**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica garantizada con **WorkManager**.
+GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los principios de **Clean Architecture**, diseñada para la captura en segundo plano de ubicación GPS y escaneo de dispositivos BLE (Bluetooth Low Energy), persistencia local reactiva con Room y sincronización periódica garantizada con **WorkManager**.
 
 ---
 
@@ -25,7 +25,7 @@ GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los
 
 ---
 
-## 🏛️ Decisiones de Arquitectura (Clean Architecture / Onion)
+## 🏛️ Decisiones de Arquitectura (Clean Architecture)
 
 El proyecto respeta estrictamente la **Regla de Dependencia** apuntando siempre hacia el centro (Dominio):
 
@@ -47,26 +47,25 @@ El proyecto respeta estrictamente la **Regla de Dependencia** apuntando siempre 
 
 ---
 
-## 🌊 Justificación sobre la Combinación de Flujos (Fase 2)
+## 🌊 Justificación sobre la Combinación de Flujos (Manejo del Hardware)
 
-- **Operador Elegido**: **`flatMapLatest`** combinado con un `StateFlow` en caliente (`stateIn`) y `.filterNotNull().take(1)`.
-- **Por qué no `combine` puro**: `combine` emite cada vez que *cualquiera* de los dos flujos emite, lo que registraría duplicados redundantes de dispositivos BLE ante cada tick del GPS.
-- **La Solución**: La ubicación se comparte como `StateFlow` (`SharingStarted.Eagerly`). Cuando el escáner BLE detecta un dispositivo, se combina con la última posición GPS conocida (`locationStateFlow.filterNotNull().take(1)`), garantizando un registro preciso por cada escaneo BLE sin duplicados y manejando de forma robusta la llegada tardía del GPS (*late GPS*).
-- **Control de Presión (Backpressure)**: Se aplicó `.buffer(capacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)`.
-- **Testabilidad**: Los despachadores se inyectan mediante el calificador `@IoDispatcher`, permitiendo pruebas unitarias deterministas con `TestDispatcher`.
+El principal reto técnico del desarrollo con hardware real es la asincronía. Mientras el escáner BLE puede emitir ráfagas de dispositivos casi de inmediato, el sensor GPS a menudo requiere de varios segundos para fijar su primera posición (el conocido "GPS Cold Start").
 
----
-
-## 🔄 Sincronización con WorkManager (Fase 4)
-
-- **Por qué WorkManager**: Para garantizar que la sincronización de eventos pendientes con el servidor no dependa exclusivamente del Foreground Service.
-- **Implementación**: `SyncWorker` (anotado con `@HiltWorker` y `@AssistedInject`) procesa registros pendientes de Room, los sube mediante `SyncRepository` y marca los IDs como sincronizados.
-- **Configuración**: Tarea periódica única (`enqueueUniquePeriodicWork`) cada 15 minutos con restricciones de red (`NetworkType.CONNECTED`) y reintentos automáticos (`Result.retry()`).
+Para orquestar esta combinación en el caso de uso `ObserveCombinedSensorDataUseCase`:
+- **La Solución (Búfer en Memoria)**: En lugar de utilizar operadores estándares como `combine` o `flatMapLatest` —los cuales perderían emisiones rápidas del BLE mientras esperan al GPS— se optó por usar `channelFlow` implementando un búfer local (`mutableListOf`). 
+- **Cero Pérdida de Datos**: Durante el arranque en frío del GPS, los dispositivos BLE detectados no se descartan ni saturan los hilos del sistema (previniendo *backpressure*); en cambio, se acumulan en el búfer. En el instante exacto en que el GPS entrega la primera coordenada válida, el búfer completo es volcado hacia la base de datos (Room) asignándoles esa posición, para luego seguir emitiendo en tiempo real.
+- **Testabilidad Asíncrona**: Para demostrar la robustez de esta decisión, se implementaron pruebas unitarias avanzadas utilizando `runTest` y `Turbine`, simulando latencias intencionales en la emisión del flujo simulado del GPS.
 
 ---
 
-## ⚖️ Trade-offs y Mejoras para Producción
+## 🔄 Sincronización con WorkManager
 
-1. **Backoff Exponencial**: Configurar `setBackoffCriteria` con retroceso exponencial en `SyncWorker`.
-2. **Retención de Datos**: Política de purgado en Room para evitar crecimiento ilimitado de la base de datos a largo plazo.
-3. **Observabilidad y CI**: Integración de Crashlytics, logging estructurado y pipelines de CI/CD para tests instrumentados y de DAO.
+- **Por qué WorkManager**: Para garantizar que la sincronización de eventos pendientes con el servidor no dependa exclusivamente de ciclos temporales manuales y respete el estado del dispositivo.
+- **Implementación**: `SyncWorker` (anotado con `@HiltWorker` y `@AssistedInject`) procesa registros pendientes de Room, los sube mediante `SyncRepository` y solo marca los IDs como sincronizados tras un éxito rotundo.
+- **Configuración**: Tarea periódica única (`enqueueUniquePeriodicWork`) configurada a 15 minutos, con estrictas restricciones de red (`NetworkType.CONNECTED`) provistas por el SO de Android.
+
+---
+
+## 🤖 Historial de Desarrollo (AI Collaboration)
+
+Para demostrar el uso maduro de asistentes virtuales en el proceso de desarrollo y arquitectura, los prompts y directrices exactas que dictaron la evolución de este proyecto (dividido en 6 fases iterativas) se han documentado y se encuentran disponibles para su evaluación en el directorio raíz `.ai-history/`.
