@@ -4,6 +4,13 @@ GeoBeacon Tracker es una aplicación Android desarrollada en **Kotlin** bajo los
 
 ---
 
+## 🤖 Historial de Desarrollo (AI Collaboration)
+
+- Para demostrar el uso maduro de asistentes virtuales en el proceso de desarrollo y arquitectura, los prompts y directrices exactas que dictaron la evolución de este proyecto (dividido en 6 fases) se han documentado y se encuentran disponibles para su evaluación en el directorio raíz `.ai-history/`.
+
+## 🗺️ Roadmap (Plan de Ejecución)
+El desarrollo de este proyecto se llevó a cabo por medio de un análisis previo que dio como resultado el desarrollo por fases apoyado por IA. Dichas fases y justificaciones arquitectónicas se encuentran reflejadas en el archivo `00-project-roadmap.md`, el cual está disponible en el directorio raíz `.ai-history/`.
+
 ## 🚀 Cómo Compilar y Ejecutar
 
 ### Requisitos
@@ -66,6 +73,10 @@ Para orquestar esta combinación en el caso de uso `ObserveCombinedSensorDataUse
 
 ---
 
-## 🤖 Historial de Desarrollo (AI Collaboration)
+## ⚠️ Edge Cases y Escalabilidad (Trade-offs)
 
-Para demostrar el uso maduro de asistentes virtuales en el proceso de desarrollo y arquitectura, los prompts y directrices exactas que dictaron la evolución de este proyecto (dividido en 6 fases iterativas) se han documentado y se encuentran disponibles para su evaluación en el directorio raíz `.ai-history/`.
+Aunque el búfer en memoria resuelve elegantemente los arranques en frío cortos (GPS Cold Starts de segundos o pocos minutos), soy consciente de que en un escenario extremo de la vida real (ej. duramnte x minutos no se puede obtener geolocalizacion  mientras tanto se cambia de ubicacion y el escáner sigue leyendo y en este punto se obtiene localicazion, con lo cual se genera un problema grave y un falso positivo de geolocalización al asignar la coordenada final a cajas leídas hace media hora.
+
+Para un entorno de **Producción a gran escala**, se aplicarían las siguientes posibles soluciones arquitectónicas:
+1. **Time-To-Live (TTL) del Búfer**: Implementar una política de descarte por antigüedad, eliminando del búfer aquellas lecturas BLE que tengan más de 2 minutos de antigüedad sin haber podido obtener un GPS.
+2. **Persistencia Agonóstica (Nullable Location)**: Modificar el modelo de negocio para aceptar eventos con ubicación nula (`val location: GeoPoint?`). Esto permitiría guardar en Room de inmediato la lectura BLE y enviarla a la central, permitiendo que los algoritmos de la empresa infieran la posición basándose en los tiempos y rutas del vehículo, sin bloquear la ingesta de datos móviles.

@@ -12,5 +12,5 @@ El objetivo de esta fase final es asegurar que el proyecto se pueda entregar de 
    - Explicación detallada de la separación de responsabilidades usando *Clean Architecture (Onion)* y *Unidirectional Data Flow*.
    - Explicación técnica de la resolución del problema de asincronía de hardware (el "GPS Cold Start") utilizando `channelFlow` con un buffer local para evitar *backpressure* y prevenir la pérdida de datos de negocio.
 - **Consolidación del Historial AI (`.ai-history/`)**:
-   - Creación de un `execution_plan_and_summary.md` que detalla ordenadamente cómo la inteligencia artificial se usó como copiloto técnico bajo la dirección y criterio del desarrollador.
+   - Creación de un `00-project-roadmap.md` que detalla ordenadamente cómo la inteligencia artificial se usó como copiloto técnico bajo la dirección y criterio del desarrollador.
    - Renombramiento y estructuración uniforme de los archivos de cada fase para facilitar su lectura por parte del entrevistador técnico.
