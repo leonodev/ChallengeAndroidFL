@@ -1,31 +1,30 @@
-# Fase 1: Capa de Dominio (El Núcleo).
+# Phase 1: Domain Layer (The Core)
 
+## Context and Objective
+- The objective of this phase is to establish the core of the application by creating the business models, interfaces (contracts), and use cases, ensuring zero coupling with layers it should not interact with under a clean (Onion) architecture.
+- Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
-## Contexto y Objetivo
-- El objetivo de esta fase es establecer el núcleo de la aplicación mediante la creación de los modelos de negocio, interfaces (contratos) y casos de uso, asegurando cero acoplamiento con capas que no deberia interactuar bajo una arquitectura clean (Onion).
-- Al finalizar todas y cada una de las intrucciones, debes verificar y compilar el proyecto para garantizar su estabilidad tras finalizar esta fase
+### 1. Instructions for Defining Models and Contracts
+> "Within the previously created domain layer, we need the pure models to represent the GPS point, the BLE device, and the combined event (SensorEvent). Also, define the interfaces for the repositories that will handle local sensor storage and synchronization with the remote server. Remember, none of these classes should import Android SDK components or database annotations."
 
-### 1. Instrucciones para la definición de Modelos y Contratos
-> "Dentro de la capa de dominio previamente creada, necesitamos los modelos puros para representar el punto GPS, el dispositivo BLE y el evento combinado (SensorEvent). También define las interfaces para los repositorios que se encargarán del almacenamiento local de sensores y de la sincronización con el servidor remoto. Recuerda, ninguna de estas clases debe importar componentes del SDK de Android o anotaciones de base de datos."
-
-**Resultado esperado:**
-- **Modelos puros de Kotlin**:
-  - `GeoPoint.kt`: Coordenadas geográficas (`latitude`, `longitude`) y timestamp.
-  - `BleDevice.kt`: Dispositivo BLE detectado (`macAddress`, `rssi`, `timestamp`).
-  - `SensorEvent.kt`: Evento combinado final que unifica BLE y GPS.
-- **Contratos (Inversión de Dependencias)**:
-  - `SensorRepository.kt`: Interfaz que define las operaciones de inserción, observación de eventos recientes mediante `Flow`, consulta de registros no sincronizados y marcado de éxito.
-  - `SyncRepository.kt`: Interfaz pura para orquestar la sincronización de una lista de `SensorEvent`.
-  - `DeviceScanner.kt` y `LocationTracker.kt`: Interfaces que representan los flujos de hardware abstraídos.
-  - `TrackingController.kt`: Interfaz que expone un `StateFlow` del estado de seguimiento y acciones para iniciar/detener, desacoplando así la capa de servicio de los casos de uso.
+**Expected Result:**
+- **Pure Kotlin Models**:
+  - `GeoPoint.kt`: Geographic coordinates (`latitude`, `longitude`) and timestamp.
+  - `BleDevice.kt`: Detected BLE device (`macAddress`, `rssi`, `timestamp`).
+  - `SensorEvent.kt`: Final combined event unifying BLE and GPS.
+- **Contracts (Dependency Inversion)**:
+  - `SensorRepository.kt`: Interface defining insertion operations, recent event observation via `Flow`, query of unsynchronized records, and success marking.
+  - `SyncRepository.kt`: Pure interface to orchestrate the synchronization of a `SensorEvent` list.
+  - `DeviceScanner.kt` and `LocationTracker.kt`: Interfaces representing the abstracted hardware flows.
+  - `TrackingController.kt`: Interface exposing a `StateFlow` of the tracking state and actions to start/stop, thus decoupling the service layer from the use cases.
  
-### 2. Extracción de Lógica a Casos de Uso
-**Instrucción proporcionada:** 
-> "Ahora, extrae toda la lógica de negocio y de orquestación en Casos de Uso (Use Cases) independientes para aplicar el principio de Responsabilidad Única (SRP) y lograr máxima cohesibilidad y testabilidad de los requerimientos funcionales del challenge."
+### 2. Logic Extraction into Use Cases
+**Provided Instruction:** 
+> "Now, extract all business and orchestration logic into independent Use Cases to apply the Single Responsibility Principle (SRP) and achieve maximum cohesiveness and testability of the challenge's functional requirements."
 
-**Resultado esperado:**
-- Múltiples UseCases independientes, inyectables mediante el constructor:
-  - `GetLastEventsUseCase`: Encapsula la obtención reactiva de los últimos eventos registrados.
-  - `StartTrackingUseCase` y `StopTrackingUseCase`: Aíslan la lógica de encendido y apagado del sistema de rastreo a través de la abstracción `TrackingController`.
-  - `ObserveTrackingStateUseCase`: Expone el estado actual del servicio hacia la UI.
-  - `RecordSensorEventsUseCase` e `InsertSensorEventUseCase`: Abstracciones para orquestar el flujo hacia el repositorio.
+**Expected Result:**
+- Multiple independent, constructor-injectable UseCases:
+  - `GetLastEventsUseCase`: Encapsulates the reactive fetching of the latest registered events.
+  - `StartTrackingUseCase` and `StopTrackingUseCase`: Isolate the logic of turning the tracking system on and off through the `TrackingController` abstraction.
+  - `ObserveTrackingStateUseCase`: Exposes the current service state to the UI.
+  - `RecordSensorEventsUseCase` and `InsertSensorEventUseCase`: Abstractions to orchestrate the flow towards the repository.

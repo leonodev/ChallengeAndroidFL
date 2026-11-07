@@ -1,47 +1,46 @@
-# Plan de Ejecución y Resumen Arquitectónico (GeoBeacon Tracker)
+# Execution Plan and Architectural Summary (GeoBeacon Tracker)
 
-Este documento registra el plan de desarrollo ejecutado fase por fase para el challenge técnico de GeoBeacon Tracker, reflejando el análisis previo, las decisiones técnicas adoptadas y la evolución del código hacia un estándar de alta calidad.
+This document outlines the step-by-step development plan executed for the GeoBeacon Tracker technical challenge, reflecting the initial analysis, technical decisions made, and the code's evolution towards a high-quality standard.
 
 ---
 
-## Lee detenidamente y analiza el siguiente instructivo como base para las deciciones tecnicas que vamos definir
-- **[instrucciones base](instructions.md).**
+## Read carefully and analyze the following instructions as a baseline for the technical decisions we will define
+- **[Base instructions](instructions.md).**
 
-## Contexto y Objetivo
-- Despues de analizar el [instrucciones base](instructions.md) vamos a definir el desarrollo por fases, asi podremos dividirlo en tareas mas cortas y mejor enfocadas. 
+## Context and Objective
+- After analyzing the [base instructions](instructions.md), we will define the development in phases, allowing us to break it down into shorter, better-focused tasks.
 
-## Resumen del analisis y fases resultantes con decisiones técnicas
+## Analysis Summary and Resulting Phases with Technical Decisions
 
-### Fase 0: Reconocimiento y Preparación (Arquitectura Base)
-- **Análisis del Boilerplate**: Inspección de `LocationTracker`, `DeviceScanner`, Room DAO y servicios base.
-- **Estructura de Paquetes**: Adopción estricta de Clean Architecture segregados por capas:
+### Phase 0: Discovery and Preparation (Base Architecture)
+- **Boilerplate Analysis**: Inspection of `LocationTracker`, `DeviceScanner`, base Room DAO, and background services.
+- **Package Structure**: Strict adoption of Clean Architecture segregated by layers:
   - `domain/models/`, `domain/repositories/`, `domain/usecases/`
   - `data/local/`, `data/remote/`, `data/repository/`, `data/mapper/`
   - `presentation/`, `di/`, `core/`, `service/`
-- **Gestión de Concurrencia**: Uso de inyección de dispatchers (`@IoDispatcher`) para facilitar el testing y aislar hilos.
+- **Concurrency Management**: Use of injected dispatchers (`@IoDispatcher`) to isolate threads and facilitate testing.
 
-### Fase 1: Capa de Dominio (El Núcleo)
-- **Modelos Puros**: `GeoPoint`, `BleDevice`, `SensorEvent` (sin dependencias del SDK de Android, Room, o Retrofit).
-- **Contratos (Inversión de Dependencias)**: Interfaces puras como `SensorRepository` y `SyncRepository`.
-- **Casos de Uso**: Extracción de toda la lógica de negocio a UseCases independientes (`StartTrackingUseCase`, `StopTrackingUseCase`, `ObserveTrackingStateUseCase`, `GetLastEventsUseCase`, etc.) para lograr máxima cohesibilidad y testabilidad.
+### Phase 1: Domain Layer (The Core)
+- **Pure Models**: `GeoPoint`, `BleDevice`, `SensorEvent` (with no dependencies on the Android SDK, Room, or Retrofit).
+- **Contracts (Dependency Inversion)**: Pure interfaces such as `SensorRepository`, `SyncRepository`, `TrackingController`, `DeviceScanner`, and `LocationTracker`.
+- **Use Cases**: Extraction of all business logic into independent UseCases (`StartTrackingUseCase`, `StopTrackingUseCase`, `ObserveTrackingStateUseCase`, `GetLastEventsUseCase`, etc.) to achieve maximum cohesiveness and testability.
 
-### Fase 2: Combinación de Flujos y Resiliencia (Resolviendo el *GPS Cold Start*)
-- **Estrategia Elegida**: Uso de `channelFlow` con un buffer en memoria (`mutableListOf<BleDevice>`) y recolección paralela en lugar de operadores estándar.
-- **Justificación Técnica**: Los operadores estándar como `combine`, `zip` o `flatMapLatest` son insuficientes para lidiar con las diferencias de hardware (el GPS puede tardar varios segundos en fijar, mientras que el BLE dispara inmediatamente). Congelar el flujo BLE esperando al GPS generaría *backpressure* y pérdida de tramas. Al usar un buffer local, capturamos todo el entorno BLE desde el milisegundo cero, y lo flusheamos hacia la base de datos en cuanto llega el primer *fix* de GPS. Cero pérdida de datos.
+### Phase 2: Flow Combining and Resilience (Solving *GPS Cold Start*)
+- **Chosen Strategy**: Use of `channelFlow` with an in-memory buffer (`mutableListOf<BleDevice>`) and parallel collection instead of standard operators.
+- **Technical Justification**: Standard operators like `combine`, `zip`, or `flatMapLatest` are insufficient to handle hardware disparities (the GPS may take several seconds to get a fix, while the BLE fires immediately). Freezing the BLE flow while waiting for the GPS would generate *backpressure* and frame loss. By using a local buffer, we capture the entire BLE environment from millisecond zero and flush it to the database as soon as the first GPS *fix* arrives. Zero data loss.
 
-### Fase 3: Capa de Datos (Persistencia y Sincronización)
-- **Room**: Uso de la base de datos local para guardar eventos. Implementación de Mappers (`SensorMapper`) bidireccionales para aislar las entidades de Room del resto de la app.
-- **Sincronización (Network Sync)**: Implementación de `SyncWorker` (WorkManager) orquestado a través de `SyncScheduler`.
-- **Justificación de WorkManager**: Aunque un `delay(15.minutes)` en un Foreground Service serviría, usar WorkManager garantiza las políticas de reintentos y restricciones de red (NetworkType.CONNECTED), mostrando alineación con los estándares modernos de Android.
+### Phase 3: Data Layer (Persistence and Synchronization)
+- **Room**: Use of the local database to store events. Implementation of bidirectional Mappers (`SensorMapper`) to isolate Room entities from the rest of the app.
+- **Synchronization (Network Sync)**: Implementation of `SyncWorker` (WorkManager) orchestrated through `SyncScheduler`.
+- **WorkManager Justification**: Although a `delay(15.minutes)` in a Foreground Service would suffice, using WorkManager ensures retry policies and network constraints (`NetworkType.CONNECTED`), showing alignment with modern Android standards.
 
-### Fase 4: Presentación y Foreground Service
-- **TrackingViewModel**: Gestión de estado reactivo y unidireccional con `StateFlow` y `combine`, reaccionando a los cambios en la base de datos local (Single Source of Truth) y al estado del Foreground Service.
-- **TrackingService**: Desacoplado de la UI; orquesta los UseCases y maneja la notificación persistente para mantener la aplicación viva en segundo plano.
+### Phase 4: Presentation and Foreground Service
+- **TrackingViewModel**: Reactive and unidirectional state management with `StateFlow` and `combine`, reacting to changes in the local database (Single Source of Truth) and the Foreground Service state.
+- **TrackingService**: Decoupled from the UI; orchestrates the Use Cases and manages the persistent notification to keep the application alive in the background.
 
-### Fase 5: Refactor y Pruebas Unitarias (Asegurando la Calidad)
-- **Refactorización Continua**: Iteración sobre la arquitectura para extraer lógica del servicio hacia los Casos de Uso, garantizando que el servicio sea un mero orquestador.
-- **Testing Asíncrono Avanzado**: Uso extensivo de la librería `Turbine` para probar la emisión correcta de eventos, las cancelaciones de flujos y la correcta inyección de `TestDispatchers` sin condiciones de carrera. Cobertura del escenario de *GPS Cold Start*.
+### Phase 5: Refactoring and Unit Testing (Ensuring Quality)
+- **Continuous Refactoring**: Iteration on the architecture to extract service logic into Use Cases, ensuring the service acts purely as a lifecycle orchestrator.
+- **Advanced Asynchronous Testing**: Extensive use of the `Turbine` library to test correct event emission, flow cancellations, and the proper injection of `TestDispatchers` without race conditions. Coverage of the *GPS Cold Start* scenario.
 
-### Fase 6: Documentación y Entrega
-- Documentación exhaustiva y honesta en `README.md`, detallando arquitectura, la resolución del problema de asincronía de hardware, trade-offs (Doze Mode vs Foreground Service timing), y deuda técnica asumida para cumplir el tiempo estimado.
-
+### Phase 6: Documentation and Delivery
+- Thorough and honest documentation in `README.md`, detailing the architecture, the resolution of the hardware asynchrony issue, trade-offs (Doze Mode vs. Foreground Service timing), and conscious technical debt assumed to meet the estimated time.

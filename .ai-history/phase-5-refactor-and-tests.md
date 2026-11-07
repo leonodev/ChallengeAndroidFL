@@ -1,20 +1,20 @@
-# Fase 5: Refactor y Pruebas Unitarias (Asegurando la Calidad)
+# Phase 5: Refactoring and Unit Testing (Ensuring Quality)
 
-## Contexto y Objetivo
-El objetivo de esta fase es consolidar la robustez del proyecto mediante la escritura de pruebas unitarias avanzadas para flujos asíncronos y refactorizar componentes para garantizar que el servicio actúe como un orquestador ciego y no albergue lógica de negocio.
-Al finalizar todas y cada una de las instrucciones, debes verificar y compilar el proyecto para garantizar su estabilidad tras finalizar esta fase.
+## Context and Objective
+- The objective of this phase is to consolidate the project's robustness by writing advanced unit tests for asynchronous flows and refactoring components to ensure that the service acts as a blind orchestrator and does not house business logic.
+- Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
-## Instrucción proporcionada:
-> "Aplica una refactorización continua para extraer cualquier lógica residual del TrackingService hacia Casos de Uso. Luego, implementa pruebas unitarias asíncronas de alto nivel utilizando la librería Turbine y MockK. Asegúrate de inyectar `StandardTestDispatcher` y de cubrir el escenario complejo del GPS Cold Start en el caso de uso de combinación de flujos, y verifica la emisión reactiva de estados en el ViewModel."
+## Provided Instruction:
+> "Apply continuous refactoring to extract any residual logic from the TrackingService into Use Cases. Then, implement high-level asynchronous unit tests using the Turbine and MockK libraries. Be sure to inject `StandardTestDispatcher` and cover the complex GPS Cold Start scenario in the flow combining use case, and verify the reactive emission of states in the ViewModel."
 
-**Resultado esperado:**
-- **Refactorización Continua**:
-   - Creación de `RecordSensorEventsUseCase` e `InsertSensorEventUseCase` para extraer la lógica de guardado que originalmente residía en el Servicio, dejándolo únicamente como orquestador del ciclo de vida de Android.
-- **Testing Asíncrono (`ObserveCombinedSensorDataUseCaseTest`)**:
-   - Implementación de pruebas con `runTest` simulando flujos de hardware con latencias (`delay(100)`).
-   - Uso de **Turbine** (`test { awaitItem() }`) para verificar la emisión combinada correcta y afirmar que no hay pérdida de paquetes BLE si el GPS llega tarde (GPS Cold Start).
-   - Sustitución del operador de cierre natural por `cancelAndIgnoreRemainingEvents()` ya que los flujos de hardware son inherentemente infinitos.
-- **Testing Reactivo (`TrackingViewModelTest`)**:
-   - Sustitución segura del Main Thread usando `Dispatchers.setMain(StandardTestDispatcher())`.
-   - Mockeo de UseCases con **MockK** (`coEvery`) para simular la emisión de `SensorEvent` desde Room.
-   - Afirmación del estado inicial y las emisiones de estado UI usando Turbine.
+**Expected Result:**
+- **Continuous Refactoring**:
+   - Creation of `RecordSensorEventsUseCase` and `InsertSensorEventUseCase` to extract the saving logic that originally resided in the Service, leaving it solely as an Android lifecycle orchestrator.
+- **Asynchronous Testing (`ObserveCombinedSensorDataUseCaseTest`)**:
+   - Implementation of tests with `runTest` simulating hardware flows with latencies (`delay(100)`).
+   - Use of **Turbine** (`test { awaitItem() }`) to verify the correct combined emission and assert that there is no BLE packet loss if the GPS arrives late (GPS Cold Start).
+   - Replacement of the natural closing operator with `cancelAndIgnoreRemainingEvents()` since hardware flows are inherently infinite.
+- **Reactive Testing (`TrackingViewModelTest`)**:
+   - Safe replacement of the Main Thread using `Dispatchers.setMain(StandardTestDispatcher())`.
+   - Mocking of UseCases with **MockK** (`coEvery`) to simulate the emission of `SensorEvent` from Room.
+   - Assertion of the initial state and UI state emissions using Turbine.

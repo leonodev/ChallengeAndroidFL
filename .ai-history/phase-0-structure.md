@@ -1,17 +1,16 @@
-# Fase 0: Reconocimiento y Preparación (Arquitectura Base)
+# Phase 0: Discovery and Preparation (Base Architecture)
 
-## Contexto y Objetivo
-- En esta fase inicial, el objetivo es analizar el código base proporcionado en el challenge (Room DAO base, `LocationTracker` y `DeviceScanner` simulados) y sentar las bases arquitectónicas del proyecto antes de escribir la lógica de implementación.
-- Al finalizar todas y cada una de las intrucciones, debes verificar y compilar el proyecto para garantizar su estabilidad tras finalizar esta fase
+## Context and Objective
+- In this initial phase, the objective is to analyze the base code provided in the challenge (Base Room DAO, mocked `LocationTracker`, and `DeviceScanner`) and establish the project's architectural foundations before writing the implementation logic.
+- Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
+## Provided Instruction:
+> "Analyze the project's boilerplate; we will use Clean Architecture with MVVM. We need to define a clear package structure aligned with what a true Clean Architecture is, where the layers always point towards the inner layers and do not depend on external ones. Create the base directory structure segregated by layers (domain, data, presentation, service, di, core) and their corresponding subdirectories (models, repositories, usecases, local, remote, etc.). Additionally, you must create an agnostic module called core, where we might house some abstractions to avoid potential coupling."
 
-## Instrucción proporcionada:
-> "Analiza el boilerplate del proyecto, vamos a utilizar Clean Architecture con MVVM. Necesitamos definir una estructura de paquetes clara y alineada con lo que es realmente una arquitectura Clean, donde las capas apunten siempre hacia las capas internas y que no dependan de capaz externas. Crea la estructura base de directorios segregada por capas (domain, data, presentation, service, di, core) y sus subdirectorios correspondientes (models, repositories, usecases, local, remote, etc.). Además, debes crear un modulo agnóstico llamado core, donde es posible que alojemos algunas abstracciones para evitar posibles acoplamientos."
-
-**Resultado esperado:**
-- **Al finalizar deberas haber creado una estructura de Paquetes como la siguiente**:
+**Expected Result:**
+- **Upon completion, you must have created a Package structure like the following**:
   - `domain/models/`, `domain/repositories/`, `domain/usecases/`
   - `data/local/`, `data/remote/`, `data/repository/`, `data/mapper/`
   - `presentation/`, `di/`, `core/`, `service/`
-- **Módulo transversal (`core`)**: Se definió un paquete `core` para alojar utilidades agnósticas y transversales a toda la aplicación. Actualmente contiene `Qualifiers.kt` (`@IoDispatcher`, `@MainDispatcher`), lo cual es una mejor práctica en Hilt para inyectar `CoroutineDispatcher`. Esto garantiza que los hilos de ejecución no estén "hardcodeados" en los repositorios o servicios, permitiendo sustituirlos fácilmente por `TestDispatchers` durante las pruebas unitarias.
+- **Cross-cutting module (`core`)**: A `core` package was defined to host agnostic utilities that are cross-cutting to the entire application. It currently contains `Qualifiers.kt` (`@IoDispatcher`, `@MainDispatcher`), which is a best practice in Hilt for injecting `CoroutineDispatcher`. This ensures that execution threads are not "hardcoded" into repositories or services, allowing them to be easily replaced by `TestDispatchers` during unit testing.
 

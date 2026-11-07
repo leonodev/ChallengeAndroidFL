@@ -1,16 +1,17 @@
-# Fase 6: Documentación y Entrega
+# Phase 6: Documentation and Delivery
 
-## Contexto y Objetivo
-El objetivo de esta fase final es asegurar que el proyecto se pueda entregar de manera muy clara. Esto implica documentar exhaustivamente las decisiones arquitectónicas, los trade-offs asumidos, e incluir los registros del uso de IA como herramienta de co-desarrollo, tal como lo requiere el challenge.
+## Context and Objective
+- The objective of this final phase is to ensure that the project can be delivered very clearly. This involves exhaustively documenting the architectural decisions, the assumed trade-offs, and including the records of AI use as a co-development tool, as required by the challenge.
+- Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
-## Instrucción proporcionada:
-> "Crea el archivo `README.md` final del proyecto. Este documento debe contener instrucciones claras para compilar y ejecutar. Además, redacta una sección explicando la arquitectura Clean y otra sección detallando la resolución del reto técnico principal (el manejo asíncrono del hardware con el buffer en memoria). Por último, consolida el historial de prompts en la carpeta `.ai-history` para la evaluación."
+## Provided Instruction:
+> "Create the final `README.md` file for the project. This document must contain clear instructions for compiling and running. Also, write a section explaining the Clean architecture and another section detailing the resolution of the main technical challenge (the asynchronous hardware management with the in-memory buffer). Finally, consolidate the prompts history in the `.ai-history` folder for evaluation."
 
-**Resultado esperado:**
-- **README.md (Arquitectura y Justificación)**:
-   - Instrucciones claras de compilación y ejecución.
-   - Explicación detallada de la separación de responsabilidades usando *Clean Architecture (Onion)* y *Unidirectional Data Flow*.
-   - Explicación técnica de la resolución del problema de asincronía de hardware (el "GPS Cold Start") utilizando `channelFlow` con un buffer local para evitar *backpressure* y prevenir la pérdida de datos de negocio.
-- **Consolidación del Historial AI (`.ai-history/`)**:
-   - Creación de un `00-project-roadmap.md` que detalla ordenadamente cómo la inteligencia artificial se usó como copiloto técnico bajo la dirección y criterio del desarrollador.
-   - Renombramiento y estructuración uniforme de los archivos de cada fase para facilitar su lectura por parte del entrevistador técnico.
+**Expected Result:**
+- **README.md (Architecture and Justification)**:
+   - Clear build and execution instructions.
+   - Detailed explanation of the separation of concerns using *Clean Architecture (Onion)* and *Unidirectional Data Flow*.
+   - Technical explanation of the resolution to the hardware asynchrony problem (the "GPS Cold Start") using `channelFlow` with a local buffer to avoid *backpressure* and prevent business data loss.
+- **Consolidation of the AI History (`.ai-history/`)**:
+   - Creation of a `00-project-roadmap.md` that orderly details how artificial intelligence was used as a technical copilot under the direction and judgment of the developer.
+   - Renaming and uniform structuring of the files for each phase to facilitate their reading by the technical interviewer.

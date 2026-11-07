@@ -1,15 +1,15 @@
-# Fase 2: Combinación de Flujos (Resolviendo el GPS Cold Start)
+# Phase 2: Flow Combining (Solving GPS Cold Start)
 
-## Contexto y Objetivo
-- El objetivo de esta fase es implementar la lógica central de la aplicación: combinar el flujo continuo de hardware BLE (DeviceScanner) con el flujo de hardware GPS (LocationTracker) para crear los eventos de sensores combinados, superando las limitaciones físicas de asincronía del hardware real.
-- Al finalizar todas y cada una de las intrucciones, debes verificar y compilar el proyecto para garantizar su estabilidad tras finalizar esta fase.
+## Context and Objective
+- The objective of this phase is to implement the application's core logic: combining the continuous BLE hardware flow (DeviceScanner) with the GPS hardware flow (LocationTracker) to create combined sensor events, overcoming the physical limitations of real-world hardware asynchrony.
+- Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
-## Instrucción proporcionada:
-> "Crea la implementación detallada del caso de uso `ObserveCombinedSensorDataUseCase`. Ten en cuenta el reto arquitectónico principal: el hardware BLE escanea y emite de inmediato, pero el hardware GPS puede tardar varios segundos en encender y emitir su primera coordenada (GPS Cold Start). Si usamos operadores como `combine` o bloqueamos el flujo BLE esperando al GPS, saturaremos el sistema y perderemos tramas BLE. Utiliza un `channelFlow` con un buffer local en memoria para guardar los dispositivos BLE temporales y emitirlos de golpe cuando llegue el primer fix de GPS, logrando así cero pérdida de datos."
+## Provided Instruction:
+> "Create the detailed implementation of the `ObserveCombinedSensorDataUseCase`. Keep in mind the main architectural challenge: the BLE hardware scans and emits immediately, but the GPS hardware may take several seconds to turn on and emit its first coordinate (GPS Cold Start). If we use operators like `combine` or block the BLE flow waiting for the GPS, we will saturate the system and lose BLE frames. Use a `channelFlow` with a local in-memory buffer to store the temporary BLE devices and emit them all at once when the first GPS fix arrives, thus achieving zero data loss."
 
-**Resultado esperado:**
-- **Implementación del UseCase `ObserveCombinedSensorDataUseCase`**:
-  - Utilización de `channelFlow` para manejar múltiples recolecciones (`collect`) concurrentes dentro de un mismo flujo de salida.
-  - Almacenamiento temporal de emisiones BLE (`mutableListOf<BleDevice>`) mientras el GPS aún no tiene una ubicación válida (cold start).
-  - Volcado (flush) del buffer hacia la salida del flujo (base de datos) en el instante en que llega la primera coordenada GPS válida.
-  - Emisión en tiempo real de los dispositivos posteriores usando siempre la ubicación GPS más reciente.
+**Expected Result:**
+- **`ObserveCombinedSensorDataUseCase` Implementation**:
+  - Use of `channelFlow` to handle multiple concurrent collections (`collect`) within the same output flow.
+  - Temporary storage of BLE emissions (`mutableListOf<BleDevice>`) while the GPS does not yet have a valid location (cold start).
+  - Flushing the buffer to the flow's output (database) the exact moment the first valid GPS coordinate arrives.
+  - Real-time emission of subsequent devices always using the most recent GPS location.

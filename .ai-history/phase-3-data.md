@@ -1,30 +1,30 @@
-# Fase 3: Capa de Datos (Persistencia y Sincronización)
+# Phase 3: Data Layer (Persistence and Synchronization)
 
-## Contexto y Objetivo
-- El objetivo de esta fase es implementar la persistencia local robusta usando Room para almacenar los eventos de sensores combinados, y establecer un mecanismo asíncrono para su posterior sincronización periódica hacia un servidor remoto mediante WorkManager.
-- Al finalizar todas y cada una de las instrucciones, debes verificar y compilar el proyecto para garantizar su estabilidad tras finalizar esta fase.
+## Context and Objective
+- The objective of this phase is to implement robust local persistence using Room to store the combined sensor events, and to establish an asynchronous mechanism for their subsequent periodic synchronization to a remote server using WorkManager.
+- Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
-## Instrucción proporcionada:
-> "En la capa de datos (data), implementa la base de datos local usando Room. Necesitamos una entidad que represente el SensorEvent, un DAO con consultas para guardar, obtener los últimos 10, listar los no sincronizados. Crea Mappers para aislar el dominio de las entidades. Luego, implementa el repositorio local `SensorRepositoryImpl` inyectando coroutines para no bloquear el hilo principal."
+## Provided Instruction:
+> "In the data layer, implement the local database using Room. We need an entity representing the SensorEvent, and a DAO with queries to save, get the latest 10, and list unsynchronized ones. Create Mappers to isolate the domain from the entities. Then, implement the local repository `SensorRepositoryImpl` injecting coroutines to avoid blocking the main thread."
 
-**Resultado esperado:**
-- **Entidad y DAO de Room**:
-   - Creación de `SensorEntity` con los campos necesarios y un flag adicional `synced: Boolean = false`.
-   - Creación de `SensorDao` con anotaciones puras de Room (`@Insert`, `@Query`) exponiendo coroutines (`suspend`) y flujos reactivos (`Flow<List<SensorEntity>>`).
+**Expected Result:**
+- **Room Entity and DAO**:
+   - Creation of `SensorEntity` with the necessary fields and an additional flag `synced: Boolean = false`.
+   - Creation of `SensorDao` with pure Room annotations (`@Insert`, `@Query`) exposing coroutines (`suspend`) and reactive flows (`Flow<List<SensorEntity>>`).
 - **Mappers (`SensorMapper.kt`)**: 
-   - Funciones de extensión `toDomain()` y `toEntity()` para transformar entre `SensorEntity` de Room y `SensorEvent` del dominio, protegiendo así el núcleo.
-- **Repositorio (`SensorRepositoryImpl`)**:
-   - Implementación estricta de la interfaz `SensorRepository`, actuando de puente mediante el DAO y mapeando los resultados antes de emitirlos.
+   - Extension functions `toDomain()` and `toEntity()` to transform between Room's `SensorEntity` and the domain's `SensorEvent`, thus protecting the core.
+- **Repository (`SensorRepositoryImpl`)**:
+   - Strict implementation of the `SensorRepository` interface, acting as a bridge via the DAO and mapping the results before emitting them.
 
-### 2. Sincronización Periódica (Background Work)
-**Instrucción proporcionada:** 
-> "Para cumplir el requerimiento de enviar los datos al servidor (mock) periódicamente cada 15 minutos, implementaremos una capa de servicios (`service`). Aunque un simple loop con delay es aceptable, utilizaremos `WorkManager` para demostrar alineación con los estándares modernos de Android, ya que permite definir restricciones de red y sobrevivir a reinicios de la aplicación."
+### 2. Periodic Synchronization (Background Work)
+**Provided Instruction:** 
+> "To fulfill the requirement of sending the data to the (mock) server periodically every 15 minutes, we will implement a services layer (`service`). Although a simple loop with delay is acceptable, we will use `WorkManager` to demonstrate alignment with modern Android standards, as it allows defining network constraints and surviving application restarts."
 
-**Resultado esperado:**
-- **WorkManager y Sincronización (`SyncWorker.kt`)**:
-   - Creación de un `CoroutineWorker` inyectado mediante Hilt (`@HiltWorker`, `@AssistedInject`).
-   - El Worker solicita los eventos no sincronizados al `SensorRepository`, los sube mediante `SyncRepository`, y solo tras un éxito, los marca masivamente como sincronizados.
-- **Orquestador (`SyncScheduler.kt`)**:
-   - Clase encargada de encolar un `PeriodicWorkRequest` de 15 minutos, asegurando que se respete la restricción de que exista conexión a internet (`NetworkType.CONNECTED`).
-- **Inyección de Dependencias**: 
-   - Modificación de Hilt en los módulos `AppModule.kt` y configuración de Factory en `GeoBeaconApp.kt` para orquestar correctamente a los Workers.
+**Expected Result:**
+- **WorkManager and Synchronization (`SyncWorker.kt`)**:
+   - Creation of a Hilt-injected `CoroutineWorker` (`@HiltWorker`, `@AssistedInject`).
+   - The Worker requests unsynchronized events from the `SensorRepository`, uploads them via the `SyncRepository`, and only upon success, bulk marks them as synchronized.
+- **Orchestrator (`SyncScheduler.kt`)**:
+   - Class responsible for enqueuing a 15-minute `PeriodicWorkRequest`, ensuring the internet connection constraint (`NetworkType.CONNECTED`) is respected.
+- **Dependency Injection**: 
+   - Modification of Hilt in the `AppModule.kt` modules and Factory configuration in `GeoBeaconApp.kt` to correctly orchestrate the Workers.
