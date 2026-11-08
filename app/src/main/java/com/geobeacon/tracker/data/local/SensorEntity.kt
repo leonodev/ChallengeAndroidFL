@@ -1,4 +1,5 @@
 package com.geobeacon.tracker.data.local
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -9,5 +10,6 @@ data class SensorEntity(
     val rssi: Int,
     val latitude: Double,
     val longitude: Double,
-    val timestamp: Long
+    val timestamp: Long,
+    val synced: Boolean = false
 )
