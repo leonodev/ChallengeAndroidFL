@@ -1,7 +1,7 @@
 # Phase 1: Domain Layer (The Core)
 
 ## Context and Objective
-- The objective of this phase is to establish the core of the application by creating the business models, interfaces (contracts), and use cases, ensuring zero coupling with layers it should not interact with under a clean (Onion) architecture.
+- The objective of this phase is to establish the core of the application by creating the business models, interfaces (contracts), and use cases, ensuring zero coupling with layers it should not interact with under a clean architecture.
 - Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
 ### 1. Instructions for Defining Models and Contracts
