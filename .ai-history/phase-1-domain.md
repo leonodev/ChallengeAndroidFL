@@ -5,7 +5,7 @@
 - Upon completing each and every instruction, you must verify and compile the project to ensure its stability after this phase.
 
 ### 1. Instructions for Defining Models and Contracts
-> "Within the previously created domain layer, we need the pure models to represent the GPS point, the BLE device, and the combined event (SensorEvent). Also, define the interfaces for the repositories that will handle local sensor storage and synchronization with the remote server. Remember, none of these classes should import Android SDK components or database annotations."
+> "Within the previously created domain layer, we need the pure models to represent the GPS point, the BLE device, and the combined event (SensorEvent). Also, define the interfaces for the repositories that will handle local sensor storage and synchronization with the remote server."
 
 **Expected Result:**
 - **Pure Kotlin Models**:
