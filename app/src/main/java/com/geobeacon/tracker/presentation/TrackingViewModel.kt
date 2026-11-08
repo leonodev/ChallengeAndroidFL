@@ -26,8 +26,8 @@ sealed interface TrackingAction {
 
 @HiltViewModel
 class TrackingViewModel @Inject constructor(
-    private val getLastEventsUseCase: GetLastEventsUseCase,
-    private val observeTrackingStateUseCase: ObserveTrackingStateUseCase,
+    getLastEventsUseCase: GetLastEventsUseCase,
+    observeTrackingStateUseCase: ObserveTrackingStateUseCase,
     private val startTrackingUseCase: StartTrackingUseCase,
     private val stopTrackingUseCase: StopTrackingUseCase
 ) : ViewModel() {
